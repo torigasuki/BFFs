@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "bffs"
+version = "0.1.0"
+description = ""
+authors = ["Jeong SeungHo <teapackage16@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+django = "^4.2.2"
+django-cors-headers = "^4.0.0"
+pillow = "^9.5.0"
+django-restframework = "^0.0.1"
+djangorestframework-simplejwt = "^5.2.2"
+pre-commit = "^3.3.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
