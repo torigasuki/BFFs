@@ -16,11 +16,14 @@ class Feed(models.Model, HitCountMixin):
     video = models.FileField(upload_to="media/video/%Y/%m/%d", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    likes = models.ManyToManyField(
+        "user.User", blank=True, default=0, related_name="feed_likes"
+    )
     is_notification = models.BooleanField(default=False)
 
-    board = models.ManyToManyField(
-        "feed.Board", related_name="feed_board", blank=False
-    )  # through='Board'
+    category = models.ManyToManyField(
+        "feed.Category", related_name="feed_category", blank=False
+    )
 
     # 조회수 코드
     view_count = models.PositiveIntegerField(default=0)
@@ -38,13 +41,13 @@ class GroupPurchase(models.Model):
     person_count = models.IntegerField(default=0)
     started_at = models.DateTimeField(null=False)
     ended_at = models.DateTimeField(null=True)
+    # 만약 구매기능까지 있으면 = 상품에 대한 db내용도 필요함 / 참여하는 사람들 / 유저 정보 필요함
 
 
 # community 내 feed에 대한 카테고리 모델, 전체/자유/모집/공구
-class Board(models.Model):
-    community = models.ForeignKey("community.Community", on_delete=models.CASCADE)
+class Category(models.Model):
     feed = models.ForeignKey(Feed, on_delete=models.CASCADE)
-    board_name = models.CharField(max_length=20)
+    category_name = models.CharField(max_length=20)
 
 
 # 댓글 모델
