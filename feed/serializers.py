@@ -62,6 +62,7 @@ class FeedCreateSerializer(serializers.ModelSerializer):
 class FeedDetailSerializer(serializers.ModelSerializer):
     likes_count = serializers.SerializerMethodField()
     comments_count = serializers.SerializerMethodField()
+    likes = serializers.StringRelatedField(many=True)
 
     class Meta:
         model = Feed
@@ -80,8 +81,16 @@ class FeedDetailSerializer(serializers.ModelSerializer):
     def get_likes_count(self, obj):
         return obj.likes.count()
 
+    # is_admin여부를 확인해 공지글로 바꾸어줄 수 있도록 구현
+    def post_is_notification(self, obj, request):
+        if request.user.is_admin() and obj.is_notification == False:
+            return obj.is_notification == True
+        elif request.user.is_admin() and obj.is_notification == True:
+            return obj.is_notification == False
+
 
 class GroupPurchaseSerializer:
+    # 공구 게시글 내용
     class Meta:
         model = GroupPurchase
         fields = "__all__"
