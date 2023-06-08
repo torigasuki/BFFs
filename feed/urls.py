@@ -14,6 +14,7 @@ urlpatterns = [
         views.CocommentView.as_view(),
         name="cocomment_put_delete_view",
     ),
+    path("search/", views.FeedSearchView.as_view(), name="feed_search_view"),
 ]
 
 # 이후 커뮤니티쪽에 옮길 url

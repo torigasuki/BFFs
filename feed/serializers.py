@@ -104,3 +104,14 @@ class GroupPurchaseSerializer:
         if ended_at and started_at > ended_at:
             raise serializers.ValidationError({"error": "시작 시간보다 이후의 시점을 선택해주세요."})
         return data
+
+
+class FeedSearchSerializer(serializers.ModelSerializer):
+    # 피드 검색 serializer
+    class Meta:
+        model = Feed
+        fields = "__all__"
+        exclude = [
+            "image",
+            "video",
+        ]

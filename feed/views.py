@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework import status, permissions
 from rest_framework.generics import get_object_or_404
 from feed.models import Feed, Comment, Cocomment
+from rest_framework import generics
+from rest_framework import filters
 
 from feed.serializers import (
     FeedListSerializer,
@@ -94,7 +96,7 @@ class CocommentView(APIView):
 
 class FeedListView(APIView):
     # feed 전체 리스트 view
-    def get(self, request):
+    def get(self, request, community_name):
         feed_list = Feed.objects.all().order_by("-created_at")
         if not feed_list:
             return Response(
@@ -199,6 +201,7 @@ class FeedCreateView(APIView):
 
 
 class LikeView(APIView):
+    # 좋아요 기능
     def post(self, request, feed_id):
         feed = get_object_or_404(Feed, id=feed_id)
         if request.user in feed.likes.all():
@@ -207,3 +210,16 @@ class LikeView(APIView):
         else:
             feed.likes.add(request.user)
             return Response("좋아요👍를 눌렀습니다.", status=status.HTTP_200_OK)
+
+
+class FeedSearchView(generics.ListCreateAPIView):
+    search_fields = (
+        "user",
+        "title",
+        "content",
+        "created_at",
+        "text",
+    )
+    filter_backends = filters.SearchFilter
+    queryset = Feed.objects.all()
+    serializer_class = FeedListSerializer, CommentSerializer
