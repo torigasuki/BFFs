@@ -18,6 +18,7 @@ from .validators import email_validator
 import requests
 import os
 from decouple import config
+from .jwt_tokenserializer import CustomTokenObtainPairSerializer
 
 
 class SendEmailView(APIView):
