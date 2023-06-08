@@ -71,7 +71,12 @@ class Comment(models.Model):
 
 # 대댓글 모델
 class Cocomment(models.Model):
-    feed = models.ForeignKey(Feed, on_delete=models.CASCADE, related_name="cocomment")
+    feed = models.ForeignKey(
+        Feed,
+        on_delete=models.CASCADE,
+        related_name="cocomment",
+        related_name="category_feed",
+    )
     comment = models.ForeignKey(
         Comment, related_name="cocomment", on_delete=models.CASCADE
     )

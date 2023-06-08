@@ -60,6 +60,12 @@ urlpatterns = [
         feedviews.CocommentView.as_view(),
         name="cocomment_create_view",
     ),
-    # like 성공/취소
+    # like 설정/취소
     path("<int:feed_id>/likes/", feedviews.LikeView.as_view(), name="like_view"),
+    # feed 게시글 공지 설정/취소
+    path(
+        "<int:feed_id>/notification/",
+        feedviews.FeedNotificationView.as_view(),
+        name="feed_notification_view",
+    ),
 ]

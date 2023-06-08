@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from feed.models import Feed, Comment, Cocomment, Category, GroupPurchase
+from community import CommunityAdmin
 from django.utils import timezone
 
 
@@ -83,10 +84,11 @@ class FeedDetailSerializer(serializers.ModelSerializer):
 
     # is_admin여부를 확인해 공지글로 바꾸어줄 수 있도록 구현
     def post_is_notification(self, obj, request):
-        if request.user.is_admin() and obj.is_notification == False:
-            return obj.is_notification == True
-        elif request.user.is_admin() and obj.is_notification == True:
-            return obj.is_notification == False
+        user = CommunityAdmin.objects.filter(user=request.user)
+        if (user.is_subadmin or user.is_comuadmin) and obj.is_notification == False:
+            return True
+        elif (user.is_subadmin or user.is_comuadmin) and obj.is_notification == True:
+            return False
 
 
 class GroupPurchaseSerializer:

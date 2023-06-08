@@ -212,6 +212,21 @@ class LikeView(APIView):
             return Response("좋아요👍를 눌렀습니다.", status=status.HTTP_200_OK)
 
 
+class FeedNotificationView(APIView):
+    def post(self, request, feed_id):
+        feed = FeedDetailSerializer(Feed, id=feed_id)
+        if feed:
+            is_notificated = feed.post_is_notification(feed, request)
+            feed.is_notification = is_notificated
+            feed.save()
+            # 해당하는 serializer에 저장
+            return Response({"message": "게시글 상태가 변경되었습니다"}, status=status.HTTP_200_OK)
+        else:
+            return Response(
+                {"error": "유효하지 않은 요청입니다"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+
 class FeedSearchView(generics.ListCreateAPIView):
     search_fields = (
         "user",
