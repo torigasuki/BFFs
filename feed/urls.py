@@ -14,8 +14,8 @@ urlpatterns = [
         views.CocommentView.as_view(),
         name="cocomment_put_delete_view",
     ),
-    path("search/", views.FeedSearchView.as_view(), name="feed_search_view"),
 ]
+
 
 # 이후 커뮤니티쪽에 옮길 url
 urlpatterns = [
@@ -51,4 +51,6 @@ urlpatterns = [
     ),
     # like 성공/취소
     path("<int:feed_id>/likes/", views.LikeView.as_view(), name="like_view"),
+    # 검색기능
+    path("search/", views.FeedSearchView.as_view(), name="feed_search_view"),
 ]
