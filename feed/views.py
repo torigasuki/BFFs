@@ -14,6 +14,7 @@ from feed.serializers import (
     FeedDetailSerializer,
     FeedCreateSerializer,
     CommentSerializer,
+    FeedNotificationSerializer,
     GroupPurchaseSerializer,
     CocommentSerializer,
 )
@@ -124,9 +125,9 @@ class FeedListView(APIView):
 
 class FeedCategoryListView(APIView):
     # feed 카테고리 리스트 view
-    def get(self, request, community_name, category_name):
+    def get(self, request, community_name, category_id):
         community = Community.objects.get(title=community_name)
-        feed_list = Feed.objects.filter(category=category_name).order_by("-created_at")
+        feed_list = Feed.objects.filter(category=category_id).order_by("-created_at")
         if not feed_list:
             return Response(
                 {"message": "아직 카테고리 게시글이 없습니다."}, status=status.HTTP_204_NO_CONTENT
@@ -233,11 +234,20 @@ class FeedNotificationView(APIView):
     def post(self, request, feed_id):
         feed = Feed.objects.get(id=feed_id)
         if feed:
-            serializer = FeedDetailSerializer(feed, data=request.data)
+            serializer = FeedNotificationSerializer(feed, data=request.data)
             is_notificated = serializer.post_is_notification(feed, request)
-            serializer.is_notification = is_notificated
-            if serializer.is_valid():
-                serializer.save()
+            if is_notificated == True:
+                print("⭐️")
+                serializer.is_valid(raise_exception=True)
+                serializer.save(is_notification=False)
+                return Response(
+                    {"data": serializer.data, "message": "게시글 상태가 변경되었습니다"},
+                    status=status.HTTP_200_OK,
+                )
+            else:  # False일 경우
+                print("⭐️⭐️")
+                serializer.is_valid(raise_exception=True)
+                serializer.save(is_notification=True)
                 return Response(
                     {"data": serializer.data, "message": "게시글 상태가 변경되었습니다"},
                     status=status.HTTP_200_OK,
