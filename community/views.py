@@ -39,9 +39,9 @@ class CommunityView(APIView):
             status=status.HTTP_202_ACCEPTED,
         )
 
-    def put(self, request, comu_id):
+    def put(self, request, community_name):
         """커뮤니티 수정"""
-        community = get_object_or_404(Community, id=comu_id)
+        community = get_object_or_404(Community, title=community_name)
         community_admin = community.comu.get(is_comuadmin=True).user
         if community_admin == request.user:
             serializer = CommunityUpdateSerializer(community, data=request.data)
@@ -54,9 +54,9 @@ class CommunityView(APIView):
         else:
             return Response({"msg": "권한이 없습니다."}, status=status.HTTP_401_UNAUTHORIZED)
 
-    def delete(self, request, comu_id):
+    def delete(self, request, community_name):
         """커뮤니티 삭제"""
-        community = get_object_or_404(Community, id=comu_id)
+        community = get_object_or_404(Community, title=community_name)
         community_admin = community.comu.get(is_comuadmin=True).user
         if community_admin == request.user:
             community.delete()
@@ -68,16 +68,16 @@ class CommunityView(APIView):
 class CommunitySubAdminView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request, comu_id):
+    def post(self, request, community_name):
         """서브 어드민 등록"""
-        community = Community.objects.get(id=comu_id)
+        community = Community.objects.get(title=community_name)
         community_admin = community.comu.get(is_comuadmin=True).user
         if community_admin == request.user:
             if community.comu.filter(user_id=request.data["user"]).exists():
                 return Response(
                     {"msg": "이미 관리자로 등록된 유저입니다."}, status=status.HTTP_400_BAD_REQUEST
                 )
-            elif community.comu.filter(community_id=comu_id).count() > 3:
+            elif community.comu.filter(community_id=community.id).count() > 3:
                 return Response(
                     {"msg": "서브 관리자는 최대 3명입니다."}, status=status.HTTP_400_BAD_REQUEST
                 )
@@ -91,9 +91,9 @@ class CommunitySubAdminView(APIView):
         else:
             return Response({"msg": "권한이 없습니다."}, status=status.HTTP_401_UNAUTHORIZED)
 
-    def delete(self, request, comu_id):
+    def delete(self, request, community_name):
         """서브 어드민 삭제"""
-        community = Community.objects.get(id=comu_id)
+        community = Community.objects.get(title=community_name)
         community_admin = community.comu.get(is_comuadmin=True).user
         if community_admin == request.user:
             if community.comu.filter(user_id=request.data["user"]).exists():
@@ -112,15 +112,16 @@ class CommunitySubAdminView(APIView):
 class CommunityForbiddenView(APIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
-    def get(self, request, comu_id):
+    def get(self, request, community_name):
         """커뮤니티 금지어 조회"""
-        forbiddenword = ForbiddenWord.objects.filter(community_id=comu_id)
+        community = Community.objects.get(title=community_name)
+        forbiddenword = ForbiddenWord.objects.filter(community_id=community.id)
         serializer = ForbiddenWordSerializer(forbiddenword, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def post(self, request, comu_id):
+    def post(self, request, community_name):
         """커뮤니티 금지어 생성"""
-        community = Community.objects.get(id=comu_id)
+        community = Community.objects.get(title=community_name)
         community_admin = community.comu.get(is_comuadmin=True).user
         if community_admin == request.user:
             serializer = ForbiddenWordSerializer(data=request.data)
@@ -134,9 +135,9 @@ class CommunityForbiddenView(APIView):
 class CommunityBookmarkView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request, comu_id):
+    def post(self, request, community_name):
         """북마크 등록 및 취소"""
-        community = Community.objects.get(id=comu_id)
+        community = Community.objects.get(title=community_name)
         if request.user in community.bookmarked.all():
             community.bookmarked.remove(request.user)
             return Response({"msg": "북마크가 취소되었습니다."}, status=status.HTTP_200_OK)
