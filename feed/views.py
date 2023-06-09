@@ -118,24 +118,21 @@ class FeedListView(APIView):
                 {"message": "아직 게시글이 없습니다."}, status=status.HTTP_204_NO_CONTENT
             )
         else:
-            serializer = FeedListSerializer(feed_list)
+            serializer = FeedListSerializer(feed_list, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class FeedCategoryListView(APIView):
     # feed 카테고리 리스트 view
     def get(self, request, community_name, category_name):
-        print("⭐️")
         community = Community.objects.get(title=community_name)
         feed_list = Feed.objects.filter(category=category_name).order_by("-created_at")
-        print("⭐️⭐️")
-
         if not feed_list:
             return Response(
                 {"message": "아직 카테고리 게시글이 없습니다."}, status=status.HTTP_204_NO_CONTENT
             )
         else:
-            serializer = FeedListSerializer(feed_list)
+            serializer = FeedListSerializer(feed_list, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -239,8 +236,12 @@ class FeedNotificationView(APIView):
             serializer = FeedDetailSerializer(feed, data=request.data)
             is_notificated = serializer.post_is_notification(feed, request)
             serializer.is_notification = is_notificated
-            serializer.save()
-            return Response({"message": "게시글 상태가 변경되었습니다"}, status=status.HTTP_200_OK)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(
+                    {"data": serializer.data, "message": "게시글 상태가 변경되었습니다"},
+                    status=status.HTTP_200_OK,
+                )
         else:
             return Response(
                 {"error": "유효하지 않은 요청입니다"}, status=status.HTTP_400_BAD_REQUEST

@@ -1,8 +1,9 @@
 from rest_framework import serializers
 from feed.models import Feed, Comment, Cocomment, Category, GroupPurchase
 from community.models import CommunityAdmin
-from user.serializers import UserCreateSerializer
+from community.serializers import CommunityAdminSerializer
 from django.utils import timezone
+from rest_framework.response import Response
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -42,6 +43,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class FeedListSerializer(serializers.ModelSerializer):
+    # user = serializers.SerializerMethodField('get_user_prefetch_related')
     class Meta:
         model = Feed
         fields = [
@@ -53,6 +55,14 @@ class FeedListSerializer(serializers.ModelSerializer):
             "created_at",
             "category",
         ]
+
+    # def get_user_prefetch_related(self, obj):
+    #     user_data = obj.user
+    #     datas = []
+    #     for data in user_data:
+    #         data = {'id': user.id, 'nickname':user.nickname}
+    #         datas.append(data)
+    #     return datas
 
 
 class FeedCreateSerializer(serializers.ModelSerializer):
@@ -90,8 +100,7 @@ class FeedDetailSerializer(serializers.ModelSerializer):
 
     # is_admin여부를 확인해 공지글로 바꾸어줄 수 있도록 구현
     def post_is_notification(self, obj, request):
-        user = CommunityAdmin.objects.filter(user=request.user)
-        print("🐛", user)
+        user = CommunityAdmin.objects.filter(user=request.user)[0]
         if user.is_subadmin != True or user.is_comuadmin != True:
             return Response({"message": "커뮤니티 관리자 권한이 없습니다"})
         else:
