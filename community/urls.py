@@ -7,7 +7,7 @@ from user.models import User
 from .serializers import SearchUserSerializer
 
 urlpatterns = [
-    path("", views.CommunityView.as_view(), name="community"),
+    path("", views.CommunityView.as_view(), name="community_view"),
     path(
         "<str:community_name>/",
         views.CommunityView.as_view(),
