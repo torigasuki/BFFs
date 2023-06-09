@@ -1,18 +1,24 @@
 from rest_framework import serializers
 from feed.models import Feed, Comment, Cocomment, Category, GroupPurchase
+from community.models import CommunityAdmin
+from user.serializers import UserCreateSerializer
 from django.utils import timezone
 
 
-class CategorySerializer:
+class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = "__all__"
+        fields = [
+            "category_name",
+        ]
 
 
-class CocommentSerializer:
+class CocommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cocomment
-        fields = "__all__"
+        fields = [
+            "text",
+        ]
         extra_kwargs = {
             "id": {"read_only": True},
             "user": {"read_only": True},
@@ -21,18 +27,17 @@ class CocommentSerializer:
         }
 
 
-class CommentSerializer:
-    cocomment = CocommentSerializer(required=False)
-
+class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = "__all__"
+        fields = [
+            "text",
+        ]
         extra_kwargs = {
             "id": {"read_only": True},
             "user": {"read_only": True},
             "created_at": {"read_only": True},
             "updated_at": {"read_only": True},
-            "cocomment": {"read_only": True},
         }
 
 
@@ -41,10 +46,12 @@ class FeedListSerializer(serializers.ModelSerializer):
         model = Feed
         fields = [
             "user",
+            # "nickname",
             "title",
             "image",
             "view_count",
             "created_at",
+            "category",
         ]
 
 
@@ -56,12 +63,15 @@ class FeedCreateSerializer(serializers.ModelSerializer):
             "content",
             "image",
             "video",
+            "category",
         ]
+        extra_kwargs = {
+            "community": {"read_only": True},
+        }
 
 
 class FeedDetailSerializer(serializers.ModelSerializer):
     likes_count = serializers.SerializerMethodField()
-    comments_count = serializers.SerializerMethodField()
     likes = serializers.StringRelatedField(many=True)
 
     class Meta:
@@ -75,21 +85,25 @@ class FeedDetailSerializer(serializers.ModelSerializer):
             "likes": {"read_only": True},
         }
 
-    def get_comments_count(self, obj):
-        return obj.comment.count() + obj.cocomment.count()
-
     def get_likes_count(self, obj):
         return obj.likes.count()
 
     # is_admin여부를 확인해 공지글로 바꾸어줄 수 있도록 구현
     def post_is_notification(self, obj, request):
-        if request.user.is_admin() and obj.is_notification == False:
-            return obj.is_notification == True
-        elif request.user.is_admin() and obj.is_notification == True:
-            return obj.is_notification == False
+        user = CommunityAdmin.objects.filter(user=request.user)
+        print("🐛", user)
+        if user.is_subadmin != True or user.is_comuadmin != True:
+            return Response({"message": "커뮤니티 관리자 권한이 없습니다"})
+        else:
+            if (user.is_subadmin or user.is_comuadmin) and obj.is_notification == False:
+                return True
+            elif (
+                user.is_subadmin or user.is_comuadmin
+            ) and obj.is_notification == True:
+                return False
 
 
-class GroupPurchaseSerializer:
+class GroupPurchaseSerializer(serializers.ModelSerializer):
     # 공구 게시글 내용
     class Meta:
         model = GroupPurchase
