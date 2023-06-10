@@ -121,11 +121,56 @@ class FeedNotificationSerializer(serializers.ModelSerializer):
                 return True
 
 
-class GroupPurchaseSerializer(serializers.ModelSerializer):
-    # 공구 게시글 내용
+class GroupPurchaseListSerializer(serializers.ModelSerializer):
+    """공구 게시글 list serializer"""
+
+    class Meta:
+        model = GroupPurchase
+        fields = [
+            "title",
+            "product_name",
+            "person_limit",
+            "is_joined",
+            "location",
+            "user",
+            "open_at",
+            "close_at",
+            "is_ended",
+            "created_at",
+        ]
+
+
+class GroupPurchaseDetailSerializer(serializers.ModelSerializer):
+    """공구 게시글 상세 serializer"""
+
     class Meta:
         model = GroupPurchase
         fields = "__all__"
+
+
+class GroupPurchaseCreateSerializer(serializers.ModelSerializer):
+    """공구 게시글 생성 serializer"""
+
+    class Meta:
+        model = GroupPurchase
+        fields = [
+            "title",
+            "content",
+            "product_name",
+            "product_number",
+            "product_price",
+            "link",
+            "person_limit",
+            "location",
+            "meeting_at",
+            "open_at",
+            "close_at",
+            "end_option",
+        ]
+        extra_kwargs = {
+            "community": {"read_only": True},
+            "category": {"read_only": True},
+        }
 
     def validate_datetime(self, data):
         now = timezone.now
@@ -138,8 +183,23 @@ class GroupPurchaseSerializer(serializers.ModelSerializer):
         return data
 
 
+class JoinedUserCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JoinedUser
+        field = [
+            "product_quantity",
+        ]
+
+
+class JoinedUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JoinedUser
+        field = "__all__"
+
+
 class FeedSearchSerializer(serializers.ModelSerializer):
-    # 피드 검색 serializer
+    """피드 검색 serializer"""
+
     class Meta:
         model = Feed
         fields = "__all__"
