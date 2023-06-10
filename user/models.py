@@ -60,6 +60,7 @@ class User(AbstractBaseUser):
     is_admin = models.BooleanField(default=False)
     withdraw_at = models.DateTimeField(blank=True, null=True)
     change_password_at = models.DateTimeField(blank=True, null=True)
+    login_type = models.CharField(max_length=10, default="site")
 
     objects = MyUserManager()
 
@@ -87,7 +88,7 @@ class User(AbstractBaseUser):
 
 
 class Verify(models.Model):
-    class Meata:
+    class Meta:
         db_table = "verify"
 
     email = models.EmailField()
@@ -120,6 +121,7 @@ class GuestBook(models.Model):
     def __str__(self):
         return str(self.user)
 
+
 class PasswordReset(models.Model):
     class Meta:
         db_table = "password_reset"
@@ -127,4 +129,3 @@ class PasswordReset(models.Model):
     email = models.EmailField()
     uuid = models.CharField(max_length=255)
     is_verify = models.BooleanField(default=False)
-
