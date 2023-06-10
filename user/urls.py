@@ -37,4 +37,8 @@ urlpatterns = [
         views.MyPasswordResetCompleteView.as_view(),
         name="password_reset_complete",
     ),
+    path("naver/login/", views.NaverLoginView.as_view(), name="naver_login"),
+    path("naver/callback/", views.NaverCallbackView.as_view(), name="naver_callback"),
+    path("google/login/", views.GoogleLoginView.as_view(), name="google_login"),
+    path("google/callback/", views.GoogleCallbackView.as_view(), name="google_callback"),
 ]
