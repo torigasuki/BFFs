@@ -153,17 +153,24 @@ class GroupPurchaseCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = GroupPurchase
-        fields = "__all__"
+        fields = [
+            "title",
+            "content",
+            "product_name",
+            "product_number",
+            "product_price",
+            "link",
+            "person_limit",
+            "location",
+            "meeting_at",
+            "open_at",
+            "close_at",
+            "end_option",
+        ]
         extra_kwargs = {
             "community": {"read_only": True},
             "category": {"read_only": True},
         }
-        exclude = [
-            "is_ended",
-            "created_at",
-            "updated_at",
-            "is_joined",
-        ]
 
     def validate_datetime(self, data):
         now = timezone.now
@@ -174,6 +181,20 @@ class GroupPurchaseCreateSerializer(serializers.ModelSerializer):
         if ended_at and started_at > ended_at:
             raise serializers.ValidationError({"error": "시작 시간보다 이후의 시점을 선택해주세요."})
         return data
+
+
+class JoinedUserCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JoinedUser
+        field = [
+            "product_quantity",
+        ]
+
+
+class JoinedUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JoinedUser
+        field = "__all__"
 
 
 class FeedSearchSerializer(serializers.ModelSerializer):

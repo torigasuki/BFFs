@@ -111,10 +111,10 @@ class GroupPurchase(models.Model, HitCountMixin):
     updated_at = models.DateTimeField(auto_now=True)
     is_ended = models.BooleanField(default=False, help_text="공구 끝내기")
 
-    user = models.ForeignKey(Profile, on_delete=models.CASCADE, help_text="글 작성자")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, help_text="글 작성자")
     person_limit = models.PositiveIntegerField(default=0, help_text="공구 제한 인원")
     is_joined = models.ManyToManyField(
-        "feed.JoinedUser", default=[], null=True, related_name="joined_purchase"
+        "feed.JoinedUser", default=[], related_name="joined_purchase"
     )
 
     location = models.CharField(max_length=100, help_text="만날 위치")
@@ -165,7 +165,9 @@ class GroupPurchase(models.Model, HitCountMixin):
 
 # 공구에 참여한 유저 모델
 class JoinedUser(models.Model):
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    profile = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="joined_user"
+    )
     grouppurchase = models.ForeignKey(GroupPurchase, on_delete=models.CASCADE)
     product_quantity = models.PositiveIntegerField()
     created_at = models.DateTimeField(default=timezone.now)

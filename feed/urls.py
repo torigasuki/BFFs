@@ -34,4 +34,16 @@ urlpatterns = [
         views.CocommentView.as_view(),
         name="cocomment_put_delete_view",
     ),
+    # grouppurchase 게시글 생성
+    path(
+        "<str:community_name>/grouppurchase/",
+        views.GroupPurchaseCreateView.as_view(),
+        name="grouppurchase_create_view",
+    ),
+    # grouppurchase 게시글 수정 삭제
+    path(
+        "grouppurchase/<int:grouppurchase_id>/",
+        views.GroupPurchaseDetailView.as_view(),
+        name="grouppurchase_put_delete_view",
+    ),
 ]

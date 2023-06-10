@@ -56,4 +56,22 @@ urlpatterns = [
         feedviews.FeedNotificationView.as_view(),
         name="feed_notification_view",
     ),
+    # grouppurchase 전체 list
+    path(
+        "<str:community_name>/grouppurchase/",
+        feedviews.GroupPurchaseListView.as_view(),
+        name="grouppurchase_list_view",
+    ),
+    # grouppurchase 상세 페이지
+    path(
+        "<str:community_name>/grouppurchase/<int:grouppurchase_id>/",
+        feedviews.GroupPurchaseDetailView.as_view(),
+        name="grouppurchase_detail_view",
+    ),
+    # grouppurchase 참여 / 취소
+    path(
+        "<int:grouppurchase_id>/join/",
+        feedviews.GroupPurchaseJoinedUserView.as_view(),
+        name="grouppurchase_join_view",
+    ),
 ]
