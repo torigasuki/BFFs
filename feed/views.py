@@ -3,7 +3,7 @@ from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from rest_framework.generics import get_object_or_404
-from feed.models import Feed, Comment, Cocomment
+from feed.models import Feed, Comment, Cocomment, GroupPurchase, JoinedUser
 from community.models import Community
 from rest_framework import generics
 from rest_framework import filters
@@ -14,9 +14,11 @@ from feed.serializers import (
     FeedDetailSerializer,
     FeedCreateSerializer,
     CommentSerializer,
-    FeedNotificationSerializer,
-    GroupPurchaseSerializer,
     CocommentSerializer,
+    FeedNotificationSerializer,
+    GroupPurchaseCreateSerializer,
+    GroupPurchaseListSerializer,
+    GroupPurchaseDetailSerializer,
 )
 
 
@@ -237,7 +239,6 @@ class FeedNotificationView(APIView):
             serializer = FeedNotificationSerializer(feed, data=request.data)
             is_notificated = serializer.post_is_notification(feed, request)
             if is_notificated == True:
-                print("⭐️")
                 serializer.is_valid(raise_exception=True)
                 serializer.save(is_notification=False)
                 return Response(
@@ -245,7 +246,6 @@ class FeedNotificationView(APIView):
                     status=status.HTTP_200_OK,
                 )
             else:  # False일 경우
-                print("⭐️⭐️")
                 serializer.is_valid(raise_exception=True)
                 serializer.save(is_notification=True)
                 return Response(
@@ -269,3 +269,136 @@ class FeedSearchView(ListAPIView):
     filter_backends = filters.SearchFilter
     queryset = Feed.objects.all()
     serializer_class = FeedListSerializer, CommentSerializer
+
+
+class GroupPurchaseCreateView(APIView):
+    """공구 create"""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, community_name):
+        serializer = GroupPurchaseCreateSerializer(data=request.data)
+        community = Community.objects.get(title=community_name)
+        if serializer.is_valid():
+            serializer.save(community=community, user=request.user)
+            return Response(
+                {"message": "공동구매 게시글이 작성되었습니다"}, status=status.HTTP_201_CREATED
+            )
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class GroupPurchaseDetailView(APIView):
+    """공구 detail get, update, delete"""
+
+    # 조회수 기능을 위한 모델 세팅
+    model = Feed
+
+    # feed 상세 및 comment,cocomment 함께 가져오기
+    def get(self, request, community_name, grouppurchase_id):
+        purchasefeed = get_object_or_404(GroupPurchase, id=grouppurchase_id)
+        community = Community.objects.get(title=community_name)
+        serializer = GroupPurchaseDetailSerializer(purchasefeed)
+        # comment = purchasefeed.comment.all().order_by("created_at")
+        # 댓글 유무 여부 확인
+        # if not comment:
+        #     return Response(
+        #         {
+        #             "message": "조회수 +1",
+        #             "feed": serializer.data,
+        #             "comment": "아직 댓글이 없습니다",
+        #         },
+        #         status=status.HTTP_200_OK,
+        #     )
+        # else:
+        # comment_serializer = CommentSerializer(comment, many=True)
+        purchasefeed.click
+        return Response(
+            {
+                "message": "조회수 +1",
+                "grouppurchasefeed": serializer.data,
+                # "comment": comment_serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def put(self, request, grouppurchase_id):
+        purchasefeed = get_object_or_404(GroupPurchase, id=grouppurchase_id)
+        if purchasefeed.user != request.user:
+            return Response(
+                {"error": "공구 게시글 작성자만 수정할 수 있습니다."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        else:
+            serializer = GroupPurchaseCreateSerializer(purchasefeed, data=request.data)
+            if serializer.is_valid():
+                serializer.save(user=request.user)
+                return Response(
+                    {"message": "공구 게시글이 수정되었습니다"}, status=status.HTTP_200_OK
+                )
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, grouppurchase_id):
+        purchasefeed = get_object_or_404(GroupPurchase, id=grouppurchase_id)
+        if purchasefeed.user != request.user:
+            return Response(
+                {"error": "공구 게시글 작성자만 삭제할 수 있습니다."}, status=status.HTTP_403_FORBIDDEN
+            )
+        else:
+            purchasefeed.delete()
+            return Response({"message": "공동구매 게시글을 삭제했습니다."}, status=status.HTTP_200_OK)
+
+
+class GroupPurchaseListView(APIView):
+    """공구 list"""
+
+    def get(self, request, community_name):
+        community = Community.objects.get(title=community_name)
+        feed_list = (
+            GroupPurchase.objects.filter(community_id=community.id)
+            .order_by("-created_at")
+            .order_by("-is_ended")
+        )
+        if not feed_list:
+            return Response(
+                {"message": "아직 게시글이 없습니다."}, status=status.HTTP_204_NO_CONTENT
+            )
+        else:
+            serializer = GroupPurchaseListSerializer(feed_list, many=True)
+            return Response(
+                {"message": "공동구매 게시글 목록을 가져왔습니다", "data": serializer.data},
+                status=status.HTTP_200_OK,
+            )
+
+
+class GroupPurchaseJoinedUserView(APIView):
+    """공구 참여 유저 생성 및 취소 view"""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, grouppurchase_id):
+        join_purchase = JoinedUser.objects.filter(
+            joined_user_id=request.user.id, grouppurchase_id=grouppurchase_id
+        ).last()
+        if not join_purchase:
+            JoinedUser.objects.create(
+                joined_user_id=request.user.id,
+                grouppurchase_id=grouppurchase_id,
+                data=request.data,
+            )
+        else:  # True
+            # is_deleted가 True / False인지 확인하여 적절한 조치 취해주기
+            pass
+
+    # 참고
+    #     if bookmark:
+    #         bookmark.delete()
+    #         return Response({"message":"북마크📌 취소"}, status=status.HTTP_200_OK)
+
+
+class GroupPurchaseEndPointView(APIView):
+    """공구 종료 조건 view"""
+
+    pass
