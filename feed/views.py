@@ -12,13 +12,12 @@ from feed.models import Feed, Comment, Cocomment, Category, GroupPurchase, Joine
 from feed.serializers import (
     CommentSerializer,
     CocommentSerializer,
-    FeedCreateSerializer,
     FeedDetailSerializer,
     FeedListSerializer,
     FeedNotificationSerializer,
     GroupPurchaseCreateSerializer,
-    GroupPurchaseDetailSerializer,
     GroupPurchaseListSerializer,
+    GroupPurchaseDetailSerializer,
     JoinedUserCreateSerializer,
     JoinedUserSerializer,
 )
@@ -260,20 +259,20 @@ class LikeView(APIView):
 
 
 class FeedNotificationView(APIView):
-    def post(self, request, feed_id):
+    def post(self, request, community_name, feed_id):
         feed = Feed.objects.get(id=feed_id)
+        community = Community.objects.get(title=community_name)
         if feed:
             serializer = FeedNotificationSerializer(feed, data=request.data)
-            is_notificated = serializer.post_is_notification(feed, request)
+            is_notificated = serializer.post_is_notification(feed, community, request)
+            serializer.is_valid(raise_exception=True)
             if is_notificated == True:
-                serializer.is_valid(raise_exception=True)
                 serializer.save(is_notification=False)
                 return Response(
                     {"data": serializer.data, "message": "게시글 상태가 변경되었습니다"},
                     status=status.HTTP_200_OK,
                 )
             else:  # False일 경우
-                serializer.is_valid(raise_exception=True)
                 serializer.save(is_notification=True)
                 return Response(
                     {"data": serializer.data, "message": "게시글 상태가 변경되었습니다"},
@@ -331,6 +330,7 @@ class GroupPurchaseDetailView(APIView):
         # comment = purchasefeed.comment.all().order_by("created_at")
         # 댓글 유무 여부 확인
         # if not comment:
+        # purchasefeed.click
         #     return Response(
         #         {
         #             "message": "조회수 +1",
@@ -355,7 +355,7 @@ class GroupPurchaseDetailView(APIView):
         purchasefeed = get_object_or_404(GroupPurchase, id=grouppurchase_id)
         if purchasefeed.user != request.user:
             return Response(
-                {"error": "공구 게시글 작성자만 수정할 수 있습니다."}, status=status.HTTP_403_FORBIDDEN
+                {"error": "공구 게시글 작성자만 수정할 수 있습니다."}, status=status.HTTP_400_BAD_REQUEST
             )
         else:
             serializer = GroupPurchaseCreateSerializer(purchasefeed, data=request.data)
@@ -463,10 +463,3 @@ class GroupPurchaseJoinedUserView(APIView):
                 {"message": "공구 수량을 수정했습니다.", "data": serializer.data},
                 status=status.HTTP_202_ACCEPTED,
             )
-
-
-class GroupPurchaseEndPointView(APIView):
-    """공구 종료 조건 view"""
-
-    def post(self, request):
-        pass
