@@ -1,39 +1,33 @@
-from .models import User, Profile, GuestBook, Verify
+from decouple import config
+import os
+import requests
 
-from rest_framework import permissions
-from rest_framework import status
-from rest_framework.generics import get_object_or_404
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.views import (
     PasswordResetView,
     PasswordResetDoneView,
     PasswordResetConfirmView,
     PasswordResetCompleteView,
 )
-
-from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import *
-from .validators import email_validator
-import requests
-import os
-from decouple import config
-from .jwt_tokenserializer import CustomTokenObtainPairSerializer
 from django.utils.crypto import get_random_string
-from .tasks import verifymail
 
-from user.serializers import (
-    UserSerializer,
+from rest_framework import permissions, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+from .models import User, Profile, GuestBook, Verify
+from .serializers import (
+    UserCreateSerializer,
+    UserDelSerializer,
     UserProfileSerializer,
     UserProfileUpdateSerializer,
-    UserDelSerializer,
     GuestBookSerializer,
     GuestBookCreateSerializer,
 )
-
-from .models import User, Profile
-
+from .validators import email_validator
+from .jwt_tokenserializer import CustomTokenObtainPairSerializer
+from .tasks import verifymail
 
 class SendEmailView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -61,6 +55,7 @@ class SendEmailView(APIView):
                 verifymail.delay(email, code)
                 Verify.objects.create(email=email, code=code)
                 return Response({"code": code}, status=status.HTTP_200_OK)  # 테스트용
+
 
                 # return Response({'success':'success'},status=status.HTTP_200_OK)
 
@@ -96,12 +91,138 @@ class SignupView(APIView):
     def post(self, request):
         user_data = UserCreateSerializer(data=request.data)
         user_data.is_valid(raise_exception=True)
-        user_data.save()
+        user = user_data.save()
+        # user 생성될때 profile 생성
+        Profile.objects.create(user=user)
         return Response({"msg": "회원가입이 완료되었습니다."}, status=status.HTTP_201_CREATED)
 
 
 class LoginView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+
+
+
+class NaverLoginView(APIView):
+    def get(self, request):
+        CLIENT_ID = config("NAVER_CLIENT_ID")
+        STATE_STRING = get_random_string(16)
+        CALLBACK_URL = config("BACKEND_URL") + "/user/naver/callback/"
+        URL = f"https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id={CLIENT_ID}&state={STATE_STRING}&redirect_uri={CALLBACK_URL}"
+        return Response({"url": URL}, status=status.HTTP_200_OK)
+
+
+class NaverCallbackView(APIView):
+    def get(self, request):
+        CLIENT_ID = config("NAVER_CLIENT_ID")
+        CLIENT_SECRET = config("NAVER_CLIENT_SECRET")
+        CODE = request.GET.get("code")
+        STATE = request.GET.get("state")
+        URL = f"https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&client_id={CLIENT_ID}&client_secret={CLIENT_SECRET}&code={CODE}&state={STATE}"
+        response = requests.get(URL)
+        response_json = response.json()
+        access_token = response_json.get("access_token")
+
+        TOKEN_URL = "https://openapi.naver.com/v1/nid/me"
+        user_response = requests.get(
+            TOKEN_URL, headers={"Authorization": "Bearer " + access_token}
+        )
+        user_response_json = user_response.json()
+        user_data = user_response_json.get("response")
+        email = user_data.get("email")
+        name = user_data.get("name")
+        social = "naver"
+        return socialLogin(name=name, email=email, login_type=social)
+
+
+class GoogleLoginView(APIView):
+    def get(self, request):
+        CLIENT_ID = config("KAKAO_CLIENT_ID")
+        BACKEND_URL = config("BACKEND_URL")
+        CALLBACK_URL = BACKEND_URL + "/user/google/callback/"
+        URL = "https://accounts.google.com/o/oauth2/v2/auth"
+        return Response(
+            {"url": URL, "redirecturi": CALLBACK_URL, "client_id": CLIENT_ID},
+            status=status.HTTP_200_OK,
+        )
+
+
+class GoogleCallbackView(APIView):
+    def get(self, request):
+        code = request.GET.get("code")
+        pass
+
+
+class KakaoLoginView(APIView):
+    def get(self, request):
+        CLIENT_ID = config("KAKAO_CLIENT_ID")
+        BACKEND_URL = config("BACKEND_URL")
+        CALLBACK_URL = BACKEND_URL + "/user/kakao/callback/"
+        URL = "https://kauth.kakao.com/oauth/authorize"
+        return Response(
+            {"url": URL, "redirecturi": CALLBACK_URL, "client_id": CLIENT_ID},
+            status=status.HTTP_200_OK,
+        )
+
+
+class KakaoCallbackView(APIView):
+    def get(self, request):
+        code = request.GET.get("code")  # url에서 code부분만 가져옴
+        data = {
+            "grant_type": "authorization_code",
+            "client_id": config("KAKAO_CLIENT_ID"),
+            "redirect_uri": config("BACKEND_URL") + "/user/kakao/callback/",
+            "code": code,
+            "client_secret": config("KAKAO_CLIENT_SECRET"),
+        }
+        access_token_request = requests.post(
+            "https://kauth.kakao.com/oauth/token",
+            headers={"Content-Type": "application/x-www-form-urlencoded;charset=utf-8"},
+            data=data,
+        )
+        token_data = access_token_request.json()
+        access_token = token_data.get("access_token")
+        user_data_response = requests.get(
+            "https://kapi.kakao.com/v2/user/me",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        user_data = user_data_response.json()
+        kakao_account = user_data.get("kakao_account")
+        profile = kakao_account.get("profile")
+
+        name = profile.get("nickname")
+        email = kakao_account.get("email")
+        social = "kakao"
+
+        profile_image = profile.get("profile_image_url")
+        age_range = kakao_account.get("age_range")
+        return socialLogin(name=name, email=email, login_type=social)
+
+
+def socialLogin(**kwargs):
+    if User.objects.filter(email=kwargs.get("email")).exists():
+        user = User.objects.get(email=kwargs.get("email"))
+        if user.login_type != kwargs.get("social"):
+            return Response(
+                {"error": "선택한 소셜계정 외 다른 가입방법으로 가입된 이메일입니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        else:
+            return get_token(user)
+    else:
+        user = User.objects.create_user(**kwargs)
+        user.set_unusable_password()
+        user.save()
+        return get_token(user)
+
+
+def get_token(user):
+    refresh_token = RefreshToken.for_user(user)
+    access_token = CustomTokenObtainPairSerializer.get_token(user)
+    return Response(
+        {"access_token": str(access_token), "refresh_token": str(refresh_token)},
+        status=status.HTTP_200_OK,
+    )
+
 
 
 # 프로필 ru
@@ -110,7 +231,11 @@ class LoginView(TokenObtainPairView):
 class ProfileView(APIView):
 
     def get(self, request, user_id):
+        profile = Profile.objects.get(user_id=user_id)
+
+    def get(self, request, user_id):
         profile = Profile.objects.get(id=user_id)
+
 
         serializer = UserProfileSerializer(profile)
 
@@ -136,7 +261,9 @@ class ProfileView(APIView):
     def delete(self, request, user_id):
         profile = User.objects.get(id=user_id)
         datas = request.data.copy()
-        datas["is_active"] = False
+
+        datas["is_withdraw"] = False
+        
         serializer = UserDelSerializer(profile, data=datas)
         if profile.check_password(request.data.get("password")):
             if serializer.is_valid():
@@ -151,7 +278,6 @@ class ProfileView(APIView):
 
 
 # 방명록 crud
-
 
 class GuestBookView(APIView):
     def get(self, request, profile_id):
@@ -187,6 +313,8 @@ class GuestBookDetailView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
             return Response("권한이 없습니다.", status=status.HTTP_403_FORBIDDEN)
+
+
 
 class MyPasswordResetView(PasswordResetView):
     html_email_template_name = "email.html"

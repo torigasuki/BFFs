@@ -1,13 +1,15 @@
-from rest_framework import serializers
-from feed.models import Feed, Comment, Cocomment, Category, GroupPurchase
-from community.models import CommunityAdmin
-from community.serializers import CommunityAdminSerializer
 from django.utils import timezone
-from rest_framework.response import Response
+from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
+from rest_framework.response import Response
+
+from community.models import CommunityAdmin
+from feed.models import Category, Comment, Cocomment, Feed, GroupPurchase, JoinedUser
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    """카테고리 serializer"""
+
     class Meta:
         model = Category
         fields = [
@@ -16,6 +18,8 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class CocommentSerializer(serializers.ModelSerializer):
+    """대댓글 serializer"""
+
     class Meta:
         model = Cocomment
         fields = [
@@ -30,6 +34,8 @@ class CocommentSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    """댓글 serializer"""
+
     class Meta:
         model = Comment
         fields = [
@@ -44,6 +50,8 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class FeedListSerializer(serializers.ModelSerializer):
+    """feed list serializer"""
+
     # user = serializers.SerializerMethodField('get_user_prefetch_related')
     class Meta:
         model = Feed
@@ -67,6 +75,8 @@ class FeedListSerializer(serializers.ModelSerializer):
 
 
 class FeedCreateSerializer(serializers.ModelSerializer):
+    """feed 생성 serializer"""
+
     class Meta:
         model = Feed
         fields = [
@@ -82,6 +92,8 @@ class FeedCreateSerializer(serializers.ModelSerializer):
 
 
 class FeedDetailSerializer(serializers.ModelSerializer):
+    """feed 상세 serializer"""
+
     likes_count = serializers.SerializerMethodField()
     likes = serializers.StringRelatedField(many=True)
 
@@ -101,6 +113,8 @@ class FeedDetailSerializer(serializers.ModelSerializer):
 
 
 class FeedNotificationSerializer(serializers.ModelSerializer):
+    """feed 공지 serializer"""
+
     class Meta:
         model = Feed
         fields = [
@@ -121,11 +135,56 @@ class FeedNotificationSerializer(serializers.ModelSerializer):
                 return True
 
 
-class GroupPurchaseSerializer(serializers.ModelSerializer):
-    # 공구 게시글 내용
+class GroupPurchaseListSerializer(serializers.ModelSerializer):
+    """공구 게시글 list serializer"""
+
+    class Meta:
+        model = GroupPurchase
+        fields = [
+            "title",
+            "product_name",
+            "person_limit",
+            "is_joined",
+            "location",
+            "user",
+            "open_at",
+            "close_at",
+            "is_ended",
+            "created_at",
+        ]
+
+
+class GroupPurchaseDetailSerializer(serializers.ModelSerializer):
+    """공구 게시글 상세 serializer"""
+
     class Meta:
         model = GroupPurchase
         fields = "__all__"
+
+
+class GroupPurchaseCreateSerializer(serializers.ModelSerializer):
+    """공구 게시글 생성 serializer"""
+
+    class Meta:
+        model = GroupPurchase
+        fields = [
+            "title",
+            "content",
+            "product_name",
+            "product_number",
+            "product_price",
+            "link",
+            "person_limit",
+            "location",
+            "meeting_at",
+            "open_at",
+            "close_at",
+            "end_option",
+        ]
+        extra_kwargs = {
+            "community": {"read_only": True},
+            "category": {"read_only": True},
+        }
 
     def validate_datetime(self, data):
         now = timezone.now
@@ -138,8 +197,33 @@ class GroupPurchaseSerializer(serializers.ModelSerializer):
         return data
 
 
+class JoinedUserCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JoinedUser
+        fields = [
+            "product_quantity",
+        ]
+        extra_kwargs = {
+            "user": {"read_only": True},
+            "grouppurchase": {"read_only": True},
+            "created_at": {"read_only": True},
+            "is_deleted": {"read_only": True},
+        }
+
+
+class JoinedUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JoinedUser
+        fields = "__all__"
+        extra_kwargs = {
+            "user": {"read_only": True},
+            "grouppurchase": {"read_only": True},
+        }
+
+
 class FeedSearchSerializer(serializers.ModelSerializer):
-    # 피드 검색 serializer
+    """피드 검색 serializer"""
+
     class Meta:
         model = Feed
         fields = "__all__"

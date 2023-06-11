@@ -28,6 +28,7 @@ class MyUserManager(BaseUserManager):
         )
         user.is_admin = True
         user.save(using=self._db)
+        Profile.objects.create(user=user)
         return user
 
 
@@ -51,6 +52,7 @@ class User(AbstractBaseUser):
             )
         ],
     )
+    login_type = models.CharField(max_length=10, default="site")
     last_login = models.DateTimeField(blank=True, null=True)
     login_count = models.IntegerField(default=0)
     banned_at = models.DateTimeField(blank=True, null=True)
@@ -87,7 +89,7 @@ class User(AbstractBaseUser):
 
 
 class Verify(models.Model):
-    class Meata:
+    class Meta:
         db_table = "verify"
 
     email = models.EmailField()
@@ -119,6 +121,7 @@ class GuestBook(models.Model):
 
     def __str__(self):
         return str(self.user)
+
 
 class PasswordReset(models.Model):
     class Meta:
