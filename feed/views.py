@@ -236,20 +236,20 @@ class LikeView(APIView):
 
 
 class FeedNotificationView(APIView):
-    def post(self, request, feed_id):
+    def post(self, request, community_name, feed_id):
         feed = Feed.objects.get(id=feed_id)
+        community = Community.objects.get(title=community_name)
         if feed:
             serializer = FeedNotificationSerializer(feed, data=request.data)
-            is_notificated = serializer.post_is_notification(feed, request)
+            is_notificated = serializer.post_is_notification(feed, community, request)
+            serializer.is_valid(raise_exception=True)
             if is_notificated == True:
-                serializer.is_valid(raise_exception=True)
                 serializer.save(is_notification=False)
                 return Response(
                     {"data": serializer.data, "message": "게시글 상태가 변경되었습니다"},
                     status=status.HTTP_200_OK,
                 )
             else:  # False일 경우
-                serializer.is_valid(raise_exception=True)
                 serializer.save(is_notification=True)
                 return Response(
                     {"data": serializer.data, "message": "게시글 상태가 변경되었습니다"},

@@ -122,8 +122,8 @@ class FeedNotificationSerializer(serializers.ModelSerializer):
         ]
 
     # is_admin여부를 확인해 공지글로 바꾸어줄 수 있도록 구현
-    def post_is_notification(self, obj, request):
-        user = get_object_or_404(CommunityAdmin, user=request.user)
+    def post_is_notification(self, obj, community, request):
+        user = CommunityAdmin.objects.filter(user=request.user, community=community)[0]
         if user.is_subadmin != True and user.is_comuadmin != True:
             return Response({"message": "커뮤니티 관리자 권한이 없습니다"})
         else:

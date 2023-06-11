@@ -52,7 +52,7 @@ urlpatterns = [
     path("<int:feed_id>/likes/", feedviews.LikeView.as_view(), name="like_view"),
     # feed 게시글 공지 설정/취소
     path(
-        "<int:feed_id>/notification/",
+        "<str:community_name>/<int:feed_id>/notification/",
         feedviews.FeedNotificationView.as_view(),
         name="feed_notification_view",
     ),
