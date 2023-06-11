@@ -183,6 +183,7 @@ SIMPLE_JWT = {
 
 CRON_CLASSES = [
     "user.cron.MyCronJob",
+    "feed.cron.MyPurchaseCronJob",
 ]
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
