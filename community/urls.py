@@ -77,7 +77,7 @@ urlpatterns = [
     # feed 게시글 공지 설정/취소
     path(
         "<str:community_name>/<int:feed_id>/notification/",
-        feedviews.FeedNotificationView.as_view(),
+        FeedNotificationView.as_view(),
         name="feed_notification_view",
     ),
     # grouppurchase 전체 list

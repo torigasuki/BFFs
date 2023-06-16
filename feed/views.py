@@ -21,6 +21,7 @@ from feed.serializers import (
     CocommentSerializer,
     FeedDetailSerializer,
     FeedListSerializer,
+    FeedCreateSerializer,
     FeedNotificationSerializer,
     GroupPurchaseCreateSerializer,
     GroupPurchaseListSerializer,
