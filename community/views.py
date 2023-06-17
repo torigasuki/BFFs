@@ -257,6 +257,8 @@ class FeedNextView(APIView):
 
 
 class FeedPrevView(APIView):
+    """피드 이전 글"""
+
     def get(self, request, community_name, feed_id):
         community = Community.objects.get(title=community_name)
         feed_list = Feed.objects.filter(

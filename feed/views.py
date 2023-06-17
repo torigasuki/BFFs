@@ -443,7 +443,12 @@ class GroupPurchaseJoinedUserView(APIView):
                 {"message": "공구 인원이 모두 찼습니다!"},
                 status=status.HTTP_405_METHOD_NOT_ALLOWED,
             )
-        if not join_purchase:
+        if purchasefeed.is_ended == True:
+            return Response(
+                {"message": "이미 종료된 공구입니다!"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not join_purchase and joined_user.product_quantity > 0:
             serializer = JoinedUserCreateSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save(user=request.user, grouppurchase_id=grouppurchase_id)
@@ -491,11 +496,6 @@ class GroupPurchaseJoinedUserView(APIView):
         else:  # True
             # is_deleted가 True / False인지 확인하여 적절한 조치 취해주기
             pass
-
-    # 참고
-    #     if bookmark:
-    #         bookmark.delete()
-    #         return Response({"message":"북마크📌 취소"}, status=status.HTTP_200_OK)
 
 
 class GroupPurchaseEndPointView(APIView):
