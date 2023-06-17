@@ -78,6 +78,8 @@ class FeedTitleSerializer(serializers.ModelSerializer):
 class FeedListSerializer(serializers.ModelSerializer):
     nickname = serializers.SerializerMethodField()
     category = serializers.SerializerMethodField()
+    comments_count = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Feed
@@ -90,6 +92,8 @@ class FeedListSerializer(serializers.ModelSerializer):
             "view_count",
             "created_at",
             "category",
+            "comments_count",
+            "likes_count",
         ]
 
     def get_nickname(self, obj):
@@ -97,6 +101,14 @@ class FeedListSerializer(serializers.ModelSerializer):
 
     def get_category(self, obj):
         return Category.objects.get(id=obj.category_id).category_name
+
+    def get_comments_count(self, obj):
+        comment = obj.comment.count()
+        cocomment = obj.comment.prefetch_related("cocomment").count()
+        return comment + cocomment
+
+    def get_likes_count(self, obj):
+        return obj.likes.count()
 
 
 class FeedCreateSerializer(serializers.ModelSerializer):

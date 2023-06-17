@@ -7,6 +7,7 @@ from rest_framework.pagination import PageNumberPagination
 from community.models import Community, CommunityAdmin
 from community.serializers import CommunityAdminSerializer
 from decouple import config
+
 from feed.models import (
     Comment,
     Cocomment,
@@ -22,6 +23,7 @@ from feed.serializers import (
     FeedCreateSerializer,
     FeedDetailSerializer,
     FeedListSerializer,
+    FeedCreateSerializer,
     FeedNotificationSerializer,
     GroupPurchaseCreateSerializer,
     GroupPurchaseListSerializer,
@@ -186,9 +188,10 @@ class FeedDetailView(APIView):
     model = Feed
 
     # feed 상세 및 comment,cocomment 함께 가져오기
-    def get(self, request, feed_id):
+    def get(self, request, community_name, feed_id):
+        # community_name이 있어야 prev, next view가 작동합니다!
         feed = get_object_or_404(Feed, id=feed_id)
-        # community = Community.objects.get(title=community_name)
+
         serializer = FeedDetailSerializer(feed)
         community = Category.objects.get(id=feed.category_id)
         community_title = community.community.title
@@ -294,10 +297,6 @@ class FeedNotificationView(APIView):
             user=request.user, community=community
         ).last()
         if not user:
-            return Response(
-                {"message": "커뮤니티 관리자 권한이 없습니다"}, status=status.HTTP_403_FORBIDDEN
-            )
-        if user.is_subadmin != True and user.is_comuadmin != True:
             return Response(
                 {"message": "커뮤니티 관리자 권한이 없습니다"}, status=status.HTTP_403_FORBIDDEN
             )
@@ -453,7 +452,12 @@ class GroupPurchaseJoinedUserView(APIView):
                 {"message": "공구 인원이 모두 찼습니다!"},
                 status=status.HTTP_405_METHOD_NOT_ALLOWED,
             )
-        if not join_purchase:
+        if purchasefeed.is_ended == True:
+            return Response(
+                {"message": "이미 종료된 공구입니다!"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not join_purchase and joined_user.product_quantity > 0:
             serializer = JoinedUserCreateSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save(user=request.user, grouppurchase_id=grouppurchase_id)
@@ -501,11 +505,6 @@ class GroupPurchaseJoinedUserView(APIView):
         else:  # True
             # is_deleted가 True / False인지 확인하여 적절한 조치 취해주기
             pass
-
-    # 참고
-    #     if bookmark:
-    #         bookmark.delete()
-    #         return Response({"message":"북마크📌 취소"}, status=status.HTTP_200_OK)
 
 
 class GroupPurchaseEndPointView(APIView):
