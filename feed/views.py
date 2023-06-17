@@ -7,6 +7,7 @@ from rest_framework.pagination import PageNumberPagination
 from django.core.files.storage import default_storage
 from community.models import Community, CommunityAdmin
 from decouple import config
+
 from feed.models import (
     Comment,
     Cocomment,
@@ -186,9 +187,10 @@ class FeedDetailView(APIView):
     model = Feed
 
     # feed 상세 및 comment,cocomment 함께 가져오기
-    def get(self, request, feed_id):
+    def get(self, request, community_name, feed_id):
+        # community_name이 있어야 prev, next view가 작동합니다!
         feed = get_object_or_404(Feed, id=feed_id)
-        # community = Community.objects.get(title=community_name)
+
         serializer = FeedDetailSerializer(feed)
         comment = feed.comment.all().order_by("created_at")
         # 댓글 유무 여부 확인
@@ -286,10 +288,6 @@ class FeedNotificationView(APIView):
             user=request.user, community=community
         ).last()
         if not user:
-            return Response(
-                {"message": "커뮤니티 관리자 권한이 없습니다"}, status=status.HTTP_403_FORBIDDEN
-            )
-        if user.is_subadmin != True and user.is_comuadmin != True:
             return Response(
                 {"message": "커뮤니티 관리자 권한이 없습니다"}, status=status.HTTP_403_FORBIDDEN
             )
