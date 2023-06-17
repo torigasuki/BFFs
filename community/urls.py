@@ -8,6 +8,8 @@ from .views import (
     SearchCommunityView,
     SearchUserView,
     CommunityCategoryView,
+    FeedNextView,
+    FeedPrevView,
 )
 from feed.views import (
     FeedListView,
@@ -71,6 +73,17 @@ urlpatterns = [
         "<str:community_name>/<int:feed_id>/",
         FeedDetailView.as_view(),
         name="feed_detail_view",
+    ),
+    # 이전 글, 다음 글
+    path(
+        "<str:community_name>/<int:feed_id>/prev/",
+        FeedPrevView.as_view(),
+        name="prev_feed",
+    ),
+    path(
+        "<str:community_name>/<int:feed_id>/next/",
+        FeedNextView.as_view(),
+        name="next_feed",
     ),
     # like 설정/취소
     path("<int:feed_id>/likes/", LikeView.as_view(), name="like_view"),

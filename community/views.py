@@ -4,10 +4,12 @@ from rest_framework import permissions, status, filters
 from rest_framework.generics import ListAPIView, get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.shortcuts import redirect
+
 
 from user.models import User
 from user.serializers import UserSerializer
-from feed.models import Category
+from feed.models import Category, Feed
 from .models import Community, CommunityAdmin, ForbiddenWord
 from .serializers import (
     CommunitySerializer,
@@ -239,3 +241,27 @@ class SearchUserView(ListAPIView):
     serializer_class = SearchUserSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ["name"]
+
+
+class FeedNextView(APIView):
+    """피드 다음 글"""
+
+    def get(self, request, community_name, feed_id):
+        community = Community.objects.get(title=community_name)
+        feed_list = Feed.objects.filter(
+            category__community=community, id__gt=feed_id
+        ).order_by("created_at")
+        if not feed_list:
+            return Response({"message": "다음 게시글이 없습니다"})
+        return redirect("feed_detail_view", community_name, feed_list.first().id)
+
+
+class FeedPrevView(APIView):
+    def get(self, request, community_name, feed_id):
+        community = Community.objects.get(title=community_name)
+        feed_list = Feed.objects.filter(
+            category__community=community, id__lt=feed_id
+        ).order_by("-created_at")
+        if not feed_list:
+            return Response({"message": "이전 게시글이 없습니다"})
+        return redirect("feed_detail_view", community_name, feed_list.first().id)
