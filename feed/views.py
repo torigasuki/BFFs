@@ -412,7 +412,8 @@ class GroupPurchaseDetailView(APIView):
                 )
             else:
                 return Response(
-                    {"error": "이미 종료된 공구 게시글은 삭제할 수 없습니다"}, status=status.HTTP_
+                    {"error": "이미 종료된 공구 게시글은 삭제할 수 없습니다"},
+                    status=status.HTTP_405_METHOD_NOT_ALLOWED,
                 )
 
 
