@@ -11,6 +11,7 @@ from collections import OrderedDict
 from feed.models import (
     Comment,
     Cocomment,
+    GroupPurchaseComment,
     Feed,
     GroupPurchase,
     JoinedUser,
@@ -31,6 +32,7 @@ from feed.serializers import (
     GroupPurchaseDetailSerializer,
     JoinedUserCreateSerializer,
     JoinedUserSerializer,
+    GroupPurchaseCommentSerializer,
 )
 from community.serializers import CommunityUrlSerializer
 import math
@@ -391,6 +393,7 @@ class GroupPurchaseCreateView(APIView):
         serializer = GroupPurchaseCreateSerializer(data=request.data)
         community = Community.objects.get(communityurl=community_url)
         if serializer.is_valid():
+            serializer.validate_datetime(request.data)
             serializer.save(community=community, user=request.user)
             return Response(
                 {"message": "공동구매 게시글이 작성되었습니다"}, status=status.HTTP_201_CREATED
@@ -405,36 +408,37 @@ class GroupPurchaseDetailView(APIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     # 조회수 기능을 위한 모델 세팅
-    model = Feed
+    model = GroupPurchase
 
     # feed 상세 및 comment,cocomment 함께 가져오기
     def get(self, request, community_url, grouppurchase_id):
         purchasefeed = get_object_or_404(GroupPurchase, id=grouppurchase_id)
         community = Community.objects.get(communityurl=community_url)
         serializer = GroupPurchaseDetailSerializer(purchasefeed)
-        # comment = purchasefeed.comment.all().order_by("created_at")
+        purchase_comment = purchasefeed.p_comment.all().order_by("created_at")
         # 댓글 유무 여부 확인
-        # if not comment:
-        # purchasefeed.click
-        #     return Response(
-        #         {
-        #             "message": "조회수 +1",
-        #             "feed": serializer.data,
-        #             "comment": "아직 댓글이 없습니다",
-        #         },
-        #         status=status.HTTP_200_OK,
-        #     )
-        # else:
-        # comment_serializer = CommentSerializer(comment, many=True)
         purchasefeed.click
-        return Response(
-            {
-                "message": "조회수 +1",
-                "grouppurchasefeed": serializer.data,
-                # "comment": comment_serializer.data,
-            },
-            status=status.HTTP_200_OK,
-        )
+        if not purchase_comment:
+            return Response(
+                {
+                    "message": "조회수 +1",
+                    "grouppurchasefeed": serializer.data,
+                    "comment": "아직 댓글이 없습니다",
+                },
+                status=status.HTTP_200_OK,
+            )
+        else:
+            purchase_comment_serializer = GroupPurchaseCommentSerializer(
+                purchase_comment, many=True
+            )
+            return Response(
+                {
+                    "message": "조회수 +1",
+                    "grouppurchasefeed": serializer.data,
+                    "comment": purchase_comment_serializer.data,
+                },
+                status=status.HTTP_200_OK,
+            )
 
     def put(self, request, grouppurchase_id):
         purchasefeed = get_object_or_404(GroupPurchase, id=grouppurchase_id)
@@ -459,8 +463,17 @@ class GroupPurchaseDetailView(APIView):
                 {"error": "공구 게시글 작성자만 삭제할 수 있습니다."}, status=status.HTTP_403_FORBIDDEN
             )
         else:
-            purchasefeed.delete()
-            return Response({"message": "공동구매 게시글을 삭제했습니다."}, status=status.HTTP_200_OK)
+            print(purchasefeed.is_ended)
+            if purchasefeed.is_ended == False:
+                purchasefeed.delete()
+                return Response(
+                    {"message": "공동구매 게시글을 삭제했습니다."}, status=status.HTTP_200_OK
+                )
+            else:
+                return Response(
+                    {"error": "이미 종료된 공구 게시글은 삭제할 수 없습니다"},
+                    status=status.HTTP_405_METHOD_NOT_ALLOWED,
+                )
 
 
 class GroupPurchaseListView(APIView):
@@ -553,15 +566,78 @@ class GroupPurchaseJoinedUserView(APIView):
                 {"message": "공구 수량을 수정했습니다.", "data": serializer.data},
                 status=status.HTTP_202_ACCEPTED,
             )
-        else:  # True
-            # is_deleted가 True / False인지 확인하여 적절한 조치 취해주기
-            pass
+        else:
+            return Response(
+                {"message": "알 수 없는 오류!", "data": serializer.data},
+                status=status.HTTP_408_REQUEST_TIMEOUT,
+            )
 
 
-class GroupPurchaseEndPointView(APIView):
-    """공구 종료 조건 view"""
+class GroupPurchaseSelfEndView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
 
-    pass
+    def post(self, request, grouppurchase_id):
+        purchase = get_object_or_404(GroupPurchase, id=grouppurchase_id)
+        if purchase.is_ended == True:
+            return Response(
+                {"message": "이미 종료된 공구 게시글입니다"},
+                status=status.HTTP_405_METHOD_NOT_ALLOWED,
+            )
+        serializer = GroupPurchaseDetailSerializer(purchase, data=request.data)
+        if serializer.is_valid():
+            serializer.save(is_ended=True)
+            return Response(
+                {"message": "공동구매 모집을 종료했습니다", "data": serializer.data},
+                status=status.HTTP_202_ACCEPTED,
+            )
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class GroupPurchaseCommentView(APIView):
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def post(self, request, grouppurchase_id):
+        serializer = GroupPurchaseCommentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user, grouppurchase_id=grouppurchase_id)
+            return Response(
+                {"message": "공구 댓글을 작성했습니다."}, status=status.HTTP_201_CREATED
+            )
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, purchase_comment_id):
+        purchase_comment = get_object_or_404(
+            GroupPurchaseComment, id=purchase_comment_id
+        )
+        if purchase_comment.user != request.user:
+            return Response(
+                {"error": "댓글 작성자만 수정할 수 있습니다."}, status=status.HTTP_403_FORBIDDEN
+            )
+        else:
+            serializer = GroupPurchaseCommentSerializer(
+                purchase_comment, data=request.data
+            )
+            if serializer.is_valid():
+                serializer.save()
+                return Response(
+                    {"message": "공구 댓글을 수정했습니다."}, status=status.HTTP_200_OK
+                )
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, purchase_comment_id):
+        purchase_comment = get_object_or_404(
+            GroupPurchaseComment, id=purchase_comment_id
+        )
+        if purchase_comment.user != request.user:
+            return Response(
+                {"error": "댓글 작성자만 삭제할 수 있습니다."}, status=status.HTTP_403_FORBIDDEN
+            )
+        else:
+            purchase_comment.delete()
+            return Response({"message": "공구 댓글을 삭제했습니다."}, status=status.HTTP_200_OK)
 
 
 class ImageUploadAndDeleteView(APIView):

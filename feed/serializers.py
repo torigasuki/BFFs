@@ -1,9 +1,16 @@
-from django.utils import timezone
+from datetime import datetime
 from rest_framework import serializers
 from rest_framework.response import Response
 
-from community.models import CommunityAdmin
-from feed.models import Category, Comment, Cocomment, Feed, GroupPurchase, JoinedUser
+from feed.models import (
+    Category,
+    Comment,
+    Cocomment,
+    Feed,
+    GroupPurchase,
+    JoinedUser,
+    GroupPurchaseComment,
+)
 from user.models import Profile
 
 
@@ -20,10 +27,15 @@ class CategorySerializer(serializers.ModelSerializer):
 class CocommentSerializer(serializers.ModelSerializer):
     """대댓글 serializer"""
 
+    user_id = serializers.SerializerMethodField()
+    nickname = serializers.SerializerMethodField()
+
     class Meta:
         model = Cocomment
         fields = [
-            "id" "user",
+            "id",
+            "user_id",
+            "nickname",
             "text",
             "created_at",
             "updated_at",
@@ -34,6 +46,12 @@ class CocommentSerializer(serializers.ModelSerializer):
             "created_at": {"read_only": True},
             "updated_at": {"read_only": True},
         }
+
+    def get_user_id(self, obj):
+        return Profile.objects.get(user=obj.user).id
+
+    def get_nickname(self, obj):
+        return Profile.objects.get(user=obj.user).nickname
 
 
 class CommentCreateSerializer(serializers.ModelSerializer):
@@ -102,7 +120,6 @@ class FeedListSerializer(serializers.ModelSerializer):
             "user",
             "nickname",
             "title",
-            "content",
             "image",
             "view_count",
             "created_at",
@@ -223,28 +240,80 @@ class FeedNotificationSerializer(serializers.ModelSerializer):
 class GroupPurchaseListSerializer(serializers.ModelSerializer):
     """공구 게시글 list serializer"""
 
+    grouppurchase_status = serializers.SerializerMethodField()
+
     class Meta:
         model = GroupPurchase
         fields = [
             "title",
             "product_name",
             "person_limit",
-            "is_joined",
             "location",
             "user",
             "open_at",
             "close_at",
             "is_ended",
             "created_at",
+            "grouppurchase_status",
         ]
+
+    def get_grouppurchase_status(self, obj):
+        now = datetime.now()
+        is_ended = obj.is_ended
+        open_at = datetime.strptime(str(obj.open_at), "%Y-%m-%d %H:%M:%S")
+        if not obj.close_at:
+            if is_ended == True:
+                return "종료"
+            elif is_ended == False and open_at > now:
+                return "시작 전"
+            elif is_ended == False and open_at < now:
+                return "진행 중"
+
+        else:
+            close_at = datetime.strptime(str(obj.close_at), "%Y-%m-%d %H:%M:%S")
+            if is_ended == True:
+                return "종료"
+            elif close_at < now:
+                # cron 작동 안했을 경우에도 종료 시간에따라 종료를 띄워주기
+                return "종료"
+            elif is_ended == False and open_at > now:
+                return "시작 전"
+            elif close_at and is_ended == False and close_at > now and open_at < now:
+                return "진행 중"
 
 
 class GroupPurchaseDetailSerializer(serializers.ModelSerializer):
     """공구 게시글 상세 serializer"""
 
+    grouppurchase_status = serializers.SerializerMethodField()
+
     class Meta:
         model = GroupPurchase
         fields = "__all__"
+
+    def get_grouppurchase_status(self, obj):
+        now = datetime.now()
+        is_ended = obj.is_ended
+        open_at = datetime.strptime(str(obj.open_at), "%Y-%m-%d %H:%M:%S")
+        if not obj.close_at:
+            if is_ended == True:
+                return "종료"
+            elif is_ended == False and open_at > now:
+                return "시작 전"
+            elif is_ended == False and open_at < now:
+                return "진행 중"
+
+        else:
+            close_at = datetime.strptime(str(obj.close_at), "%Y-%m-%d %H:%M:%S")
+            if is_ended == True:
+                return "종료"
+            elif close_at < now:
+                # cron 작동 안했을 경우에도 종료 시간에따라 종료를 띄워주기
+                return "종료"
+            elif is_ended == False and open_at > now:
+                return "시작 전"
+            elif close_at and is_ended == False and close_at > now and open_at < now:
+                return "진행 중"
 
 
 class GroupPurchaseCreateSerializer(serializers.ModelSerializer):
@@ -267,18 +336,22 @@ class GroupPurchaseCreateSerializer(serializers.ModelSerializer):
             "end_option",
         ]
         extra_kwargs = {
+            "user": {"read_only": True},
             "community": {"read_only": True},
             "category": {"read_only": True},
         }
 
     def validate_datetime(self, data):
-        now = timezone.now
-        started_at = data.get("started_at")
-        ended_at = data.get("ended_at")
-        if now > started_at:
+        now = datetime.now()
+        open_at = datetime.strptime(data.get("open_at"), "%Y-%m-%dT%H:%M:%S")
+        close_at = datetime.strptime(data.get("close_at"), "%Y-%m-%dT%H:%M:%S")
+        meeting_at = datetime.strptime(data.get("meeting_at"), "%Y-%m-%dT%H:%M:%S")
+        if now >= open_at and meeting_at < open_at:
             raise serializers.ValidationError({"error": "현재 이후의 시점을 선택해주세요."})
-        if ended_at and started_at > ended_at:
-            raise serializers.ValidationError({"error": "시작 시간보다 이후의 시점을 선택해주세요."})
+        if close_at and open_at > close_at:
+            raise serializers.ValidationError({"error": "공구 시작 시간보다 이후의 시점을 선택해주세요."})
+        if close_at and meeting_at < close_at:
+            raise serializers.ValidationError({"error": "공구가 끝나는 시간보다 이후의 시점을 선택해주세요."})
         return data
 
 
@@ -316,3 +389,33 @@ class FeedSearchSerializer(serializers.ModelSerializer):
             "image",
             "video",
         ]
+
+
+class GroupPurchaseCommentSerializer(serializers.ModelSerializer):
+    """공구 댓글 serializer"""
+
+    user_id = serializers.SerializerMethodField()
+    nickname = serializers.SerializerMethodField()
+
+    class Meta:
+        model = GroupPurchaseComment
+        fields = [
+            "id",
+            "user_id",
+            "nickname",
+            "text",
+            "created_at",
+            "updated_at",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "user": {"read_only": True},
+            "created_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+
+    def get_user_id(self, obj):
+        return Profile.objects.get(user=obj.user).id
+
+    def get_nickname(self, obj):
+        return Profile.objects.get(user=obj.user).nickname
