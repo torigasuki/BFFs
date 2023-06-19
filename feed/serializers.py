@@ -1,6 +1,8 @@
 from django.utils import timezone
 from rest_framework import serializers
+from rest_framework.response import Response
 
+from community.models import CommunityAdmin
 from feed.models import Category, Comment, Cocomment, Feed, GroupPurchase, JoinedUser
 from user.models import Profile
 
@@ -21,8 +23,7 @@ class CocommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cocomment
         fields = [
-            "id",
-            "user",
+            "id" "user",
             "text",
             "created_at",
             "updated_at",
@@ -33,6 +34,18 @@ class CocommentSerializer(serializers.ModelSerializer):
             "created_at": {"read_only": True},
             "updated_at": {"read_only": True},
         }
+
+
+class CommentCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = [
+            "text",
+        ]
+
+    def create(self, validated_data):
+        comment = Comment.objects.create(**validated_data)
+        return comment
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -69,6 +82,7 @@ class FeedTitleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Feed
         fields = [
+            "id",
             "category",
             "title",
             "view_count",
@@ -88,6 +102,7 @@ class FeedListSerializer(serializers.ModelSerializer):
             "user",
             "nickname",
             "title",
+            "content",
             "image",
             "view_count",
             "created_at",
@@ -135,6 +150,7 @@ class FeedDetailSerializer(serializers.ModelSerializer):
     likes = serializers.StringRelatedField(many=True)
     nickname = serializers.SerializerMethodField()
     category = serializers.SerializerMethodField()
+    like_bool = serializers.SerializerMethodField()
 
     class Meta:
         model = Feed
@@ -146,6 +162,7 @@ class FeedDetailSerializer(serializers.ModelSerializer):
             "created_at": {"read_only": True},
             "updated_at": {"read_only": True},
             "likes": {"read_only": True},
+            "like_bool": {"read_only": True},
         }
 
     def get_likes_count(self, obj):
@@ -156,6 +173,34 @@ class FeedDetailSerializer(serializers.ModelSerializer):
 
     def get_category(self, obj):
         return Category.objects.get(id=obj.category_id).category_name
+
+    def get_like_bool(self, obj):
+        request = self.context.get("request", None)
+        user = request.user
+        if request and user in obj.likes.all():
+            return True
+        else:
+            return False
+
+
+class ProfileFeedSerializer(serializers.ModelSerializer):
+    """feed 상세 serializer"""
+
+    nickname = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Feed
+        fields = "__all__"
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "user": {"read_only": True},
+            "nickname": {"read_only": True},
+            "created_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+
+    def get_nickname(self, obj):
+        return Profile.objects.get(user=obj.user).nickname
 
 
 class FeedNotificationSerializer(serializers.ModelSerializer):
@@ -171,7 +216,7 @@ class FeedNotificationSerializer(serializers.ModelSerializer):
     def post_is_notification(self, obj, community, request):
         if obj.is_notification == False:
             return False
-        else:
+        elif obj.is_notification == True:
             return True
 
 

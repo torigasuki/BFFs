@@ -1,6 +1,7 @@
 from decouple import config
 import requests
 
+from django.db.models import Q
 from django.contrib.auth.views import (
     PasswordResetConfirmView,
     PasswordResetCompleteView,
@@ -28,8 +29,8 @@ from .serializers import (
     GuestBookCreateSerializer,
     SearchUserSerializer,
 )
-from feed.serializers import FeedDetailSerializer
-from community.models import CommunityAdmin
+from feed.serializers import ProfileFeedSerializer
+from community.models import Community, CommunityAdmin
 from community.serializers import CommunityCreateSerializer, MyCommunitySerializer
 from .validators import email_validator
 from .jwt_tokenserializer import CustomTokenObtainPairSerializer
@@ -200,7 +201,13 @@ class KakaoCallbackView(APIView):
 
         profile_image = profile.get("profile_image_url")
         age_range = kakao_account.get("age_range")
-        return socialLogin(name=name, email=email, login_type=social)
+        return socialLogin(
+            name=name,
+            email=email,
+            login_type=social,
+            nickname=name,
+            profileimage=profile_image,
+        )
 
 
 def socialLogin(**kwargs):
@@ -222,6 +229,7 @@ def socialLogin(**kwargs):
 
 def get_token(user):
     token = CustomTokenObtainPairSerializer.social_token(user)
+    print(token)
     callback_url = f"{config('FRONTEND_URL')}/callback?access_token={token.get('access')}&refresh_token={token.get('refresh')}"
     return redirect(callback_url)
 
@@ -229,8 +237,15 @@ def get_token(user):
 # 프로필 ru
 
 
-# 프로필 id 받아오는 거로 수정할 예정!!!!!!!!!!!!!!!!!!
 class ProfileView(APIView):
+    def get(self, request):
+        profile = Profile.objects.all()
+        profile_serializer = UserProfileSerializer(profile, many=True)
+        return Response(profile_serializer.data, status=status.HTTP_200_OK)
+
+
+# 프로필 id 받아오는 거로 수정할 예정!!!!!!!!!!!!!!!!!!
+class ProfileDetailView(APIView):
     def get(self, request, user_id):
         profile = Profile.objects.get(user_id=user_id)
         profile_serializer = UserProfileSerializer(profile)
@@ -240,13 +255,16 @@ class ProfileView(APIView):
         community = CommunityAdmin.objects.filter(user_id=user_id)
         community_serializer = MyCommunitySerializer(community, many=True)
         feed = user.author.all()
-        feed_serializer = FeedDetailSerializer(feed, many=True)
+        feed_serializer = ProfileFeedSerializer(feed, many=True)
+        guestbook = GuestBook.objects.filter(profile_id=user_id).order_by("-created_at")
+        guestbook_serializer = GuestBookSerializer(guestbook, many=True)
         return Response(
             {
                 "profile": profile_serializer.data,
                 "bookmark": bookmark_serializer.data,
                 "community": community_serializer.data,
                 "feed": feed_serializer.data,
+                "guestbook": guestbook_serializer.data,
             },
             status=status.HTTP_200_OK,
         )
@@ -351,7 +369,16 @@ class MyPasswordResetCompleteView(PasswordResetCompleteView):
 class SearchUserView(ListAPIView):
     """유저 조회 및 검색"""
 
-    queryset = User.objects.all()
     serializer_class = SearchUserSerializer
     filter_backends = [filters.SearchFilter]
-    search_fields = ["name"]
+    search_fields = ["name", "profile__nickname", "email"]
+    pagination_class = None
+
+    def get_queryset(self):
+        communityurl = self.request.GET.get("community_url")
+        queryset = User.objects.exclude(
+            mycomu__is_comuadmin=True, mycomu__community__communityurl=communityurl
+        ).exclude(
+            mycomu__is_subadmin=True, mycomu__community__communityurl=communityurl
+        )
+        return queryset

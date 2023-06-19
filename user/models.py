@@ -6,18 +6,20 @@ import uuid
 
 
 class MyUserManager(BaseUserManager):
-    def create_user(self, email, name, password=None, **extra_fields):
+    def create_user(
+        self, email, name, password=None, login_type="site", **extra_fields
+    ):
         if not email:
             raise ValueError("Users must have an email address")
 
         user = self.model(
             email=self.normalize_email(email),
             name=name,
-            **extra_fields,
+            login_type=login_type,
         )
         user.set_password(password)
         user.save(using=self._db)
-        Profile.objects.create(user=user)
+        Profile.objects.create(user=user, **extra_fields)
         return user
 
     def create_superuser(self, email, name, password=None):
@@ -97,7 +99,7 @@ class Verify(models.Model):
 
 
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     nickname = models.CharField(max_length=24)
     profileimage = models.ImageField(upload_to="profile_img/", null=True, blank=True)
     introduction = models.TextField(null=True, blank=True, default=None)
