@@ -404,8 +404,16 @@ class GroupPurchaseDetailView(APIView):
                 {"error": "공구 게시글 작성자만 삭제할 수 있습니다."}, status=status.HTTP_403_FORBIDDEN
             )
         else:
-            purchasefeed.delete()
-            return Response({"message": "공동구매 게시글을 삭제했습니다."}, status=status.HTTP_200_OK)
+            print(purchasefeed.is_ended)
+            if purchasefeed.is_ended == False:
+                purchasefeed.delete()
+                return Response(
+                    {"message": "공동구매 게시글을 삭제했습니다."}, status=status.HTTP_200_OK
+                )
+            else:
+                return Response(
+                    {"error": "이미 종료된 공구 게시글은 삭제할 수 없습니다"}, status=status.HTTP_
+                )
 
 
 class GroupPurchaseListView(APIView):
