@@ -1,4 +1,4 @@
-from django.utils import timezone
+from datetime import datetime
 from rest_framework import serializers
 
 from feed.models import (
@@ -213,22 +213,63 @@ class GroupPurchaseListSerializer(serializers.ModelSerializer):
             "grouppurchase_status",
         ]
 
-    def get_grouppurchase_status(self, data):
-        now = timezone.now
-        if data.is_ended == True:
-            return "종료"
-        if data.is_ended == False and data.close_at < now and data.open_at > now:
-            return "진행 중"
-        if data.is_ended == False and data.open_at < now:
-            return "시작 전"
+    def get_grouppurchase_status(self, obj):
+        now = datetime.now()
+        is_ended = obj.is_ended
+        open_at = datetime.strptime(str(obj.open_at), "%Y-%m-%d %H:%M:%S")
+        if not obj.close_at:
+            if is_ended == True:
+                return "종료"
+            elif is_ended == False and open_at > now:
+                return "시작 전"
+            elif is_ended == False and open_at < now:
+                return "진행 중"
+
+        else:
+            close_at = datetime.strptime(str(obj.close_at), "%Y-%m-%d %H:%M:%S")
+            if is_ended == True:
+                return "종료"
+            elif close_at < now:
+                # cron 작동 안했을 경우에도 종료 시간에따라 종료를 띄워주기
+                return "종료"
+            elif is_ended == False and open_at > now:
+                return "시작 전"
+            elif close_at and is_ended == False and close_at > now and open_at < now:
+                return "진행 중"
 
 
 class GroupPurchaseDetailSerializer(serializers.ModelSerializer):
     """공구 게시글 상세 serializer"""
 
+    grouppurchase_status = serializers.SerializerMethodField()
+
     class Meta:
         model = GroupPurchase
         fields = "__all__"
+
+    def get_grouppurchase_status(self, obj):
+        now = datetime.now()
+        is_ended = obj.is_ended
+        open_at = datetime.strptime(str(obj.open_at), "%Y-%m-%d %H:%M:%S")
+        if not obj.close_at:
+            if is_ended == True:
+                return "종료"
+            elif is_ended == False and open_at > now:
+                return "시작 전"
+            elif is_ended == False and open_at < now:
+                return "진행 중"
+
+        else:
+            close_at = datetime.strptime(str(obj.close_at), "%Y-%m-%d %H:%M:%S")
+            if is_ended == True:
+                return "종료"
+            elif close_at < now:
+                # cron 작동 안했을 경우에도 종료 시간에따라 종료를 띄워주기
+                return "종료"
+            elif is_ended == False and open_at > now:
+                return "시작 전"
+            elif close_at and is_ended == False and close_at > now and open_at < now:
+                return "진행 중"
 
 
 class GroupPurchaseCreateSerializer(serializers.ModelSerializer):
@@ -256,12 +297,12 @@ class GroupPurchaseCreateSerializer(serializers.ModelSerializer):
         }
 
     def validate_datetime(self, data):
-        now = timezone.now
-        started_at = data.get("started_at")
-        ended_at = data.get("ended_at")
-        if now > started_at:
+        now = datetime.now()
+        open_at = datetime.strptime(data.get("open_at"), "%Y-%m-%dT%H:%M:%S")
+        close_at = datetime.strptime(data.get("close_at"), "%Y-%m-%dT%H:%M:%S")
+        if now >= open_at:
             raise serializers.ValidationError({"error": "현재 이후의 시점을 선택해주세요."})
-        if ended_at and started_at > ended_at:
+        if close_at and open_at > close_at:
             raise serializers.ValidationError({"error": "시작 시간보다 이후의 시점을 선택해주세요."})
         return data
 

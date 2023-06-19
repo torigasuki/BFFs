@@ -335,6 +335,7 @@ class GroupPurchaseCreateView(APIView):
         serializer = GroupPurchaseCreateSerializer(data=request.data)
         community = Community.objects.get(title=community_name)
         if serializer.is_valid():
+            serializer.validate_datetime(request.data)
             serializer.save(community=community, user=request.user)
             return Response(
                 {"message": "공동구매 게시글이 작성되었습니다"}, status=status.HTTP_201_CREATED
