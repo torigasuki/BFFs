@@ -11,6 +11,7 @@ from decouple import config
 from feed.models import (
     Comment,
     Cocomment,
+    GroupPurchaseComment,
     Feed,
     GroupPurchase,
     JoinedUser,
@@ -30,6 +31,7 @@ from feed.serializers import (
     GroupPurchaseDetailSerializer,
     JoinedUserCreateSerializer,
     JoinedUserSerializer,
+    GroupPurchaseCommentSerializer,
 )
 
 
@@ -198,9 +200,9 @@ class FeedDetailView(APIView):
         admin = Category.objects.get(id=feed.category_id).community.comu
         admin_serializer = CommunityAdminSerializer(admin, many=True)
         comment = feed.comment.all().order_by("created_at")
+        feed.click
         # 댓글 유무 여부 확인
         if not comment:
-            feed.click
             return Response(
                 {
                     "message": "조회수 +1",
@@ -214,7 +216,6 @@ class FeedDetailView(APIView):
         else:
             comment_serializer = CommentSerializer(comment, many=True)
             # feed를 get할 때 조회수 올리기
-            feed.click
             return Response(
                 {
                     "message": "조회수 +1",
@@ -225,12 +226,6 @@ class FeedDetailView(APIView):
                 },
                 status=status.HTTP_200_OK,
             )
-
-    # feed 조회수 기능 => get할때 조회수가 올라가도록 바꾸기! 작동 확인 후 주석 및 코드 삭제하도록 하겠음
-    # def post(self, request, feed_id):
-    #     feed = get_object_or_404(Feed, id=feed_id)
-    #     feed.click
-    #     return Response("조회수 +1", status=status.HTTP_200_OK)
 
     def put(self, request, feed_id):
         feed = get_object_or_404(Feed, id=feed_id)
@@ -359,31 +354,31 @@ class GroupPurchaseDetailView(APIView):
     # feed 상세 및 comment,cocomment 함께 가져오기
     def get(self, request, community_name, grouppurchase_id):
         purchasefeed = get_object_or_404(GroupPurchase, id=grouppurchase_id)
-        community = Community.objects.get(title=community_name)
         serializer = GroupPurchaseDetailSerializer(purchasefeed)
-        # comment = purchasefeed.comment.all().order_by("created_at")
+        purchase_comment = purchasefeed.p_comment.all().order_by("created_at")
         # 댓글 유무 여부 확인
-        # if not comment:
-        # purchasefeed.click
-        #     return Response(
-        #         {
-        #             "message": "조회수 +1",
-        #             "feed": serializer.data,
-        #             "comment": "아직 댓글이 없습니다",
-        #         },
-        #         status=status.HTTP_200_OK,
-        #     )
-        # else:
-        # comment_serializer = CommentSerializer(comment, many=True)
         purchasefeed.click
-        return Response(
-            {
-                "message": "조회수 +1",
-                "grouppurchasefeed": serializer.data,
-                # "comment": comment_serializer.data,
-            },
-            status=status.HTTP_200_OK,
-        )
+        if not purchase_comment:
+            return Response(
+                {
+                    "message": "조회수 +1",
+                    "feed": serializer.data,
+                    "comment": "아직 댓글이 없습니다",
+                },
+                status=status.HTTP_200_OK,
+            )
+        else:
+            purchase_comment_serializer = GroupPurchaseCommentSerializer(
+                purchase_comment, many=True
+            )
+            return Response(
+                {
+                    "message": "조회수 +1",
+                    "grouppurchasefeed": serializer.data,
+                    "comment": purchase_comment_serializer.data,
+                },
+                status=status.HTTP_200_OK,
+            )
 
     def put(self, request, grouppurchase_id):
         purchasefeed = get_object_or_404(GroupPurchase, id=grouppurchase_id)
@@ -502,15 +497,57 @@ class GroupPurchaseJoinedUserView(APIView):
                 {"message": "공구 수량을 수정했습니다.", "data": serializer.data},
                 status=status.HTTP_202_ACCEPTED,
             )
-        else:  # True
-            # is_deleted가 True / False인지 확인하여 적절한 조치 취해주기
-            pass
+        else:
+            return Response(
+                {"message": "알 수 없는 오류!", "data": serializer.data},
+                status=status.HTTP_408_REQUEST_TIMEOUT,
+            )
 
 
-class GroupPurchaseEndPointView(APIView):
-    """공구 종료 조건 view"""
+class GroupPurchaseCommentView(APIView):
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
-    pass
+    def post(self, request, grouppurchase_id):
+        serializer = GroupPurchaseCommentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user, grouppurchase_id=grouppurchase_id)
+            return Response(
+                {"message": "공구 댓글을 작성했습니다."}, status=status.HTTP_201_CREATED
+            )
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, purchase_comment_id):
+        purchase_comment = get_object_or_404(
+            GroupPurchaseComment, id=purchase_comment_id
+        )
+        if purchase_comment.user != request.user:
+            return Response(
+                {"error": "댓글 작성자만 수정할 수 있습니다."}, status=status.HTTP_403_FORBIDDEN
+            )
+        else:
+            serializer = GroupPurchaseCommentSerializer(
+                purchase_comment, data=request.data
+            )
+            if serializer.is_valid():
+                serializer.save()
+                return Response(
+                    {"message": "공구 댓글을 수정했습니다."}, status=status.HTTP_200_OK
+                )
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, purchase_comment_id):
+        purchase_comment = get_object_or_404(
+            GroupPurchaseComment, id=purchase_comment_id
+        )
+        if purchase_comment.user != request.user:
+            return Response(
+                {"error": "댓글 작성자만 삭제할 수 있습니다."}, status=status.HTTP_403_FORBIDDEN
+            )
+        else:
+            purchase_comment.delete()
+            return Response({"message": "공구 댓글을 삭제했습니다."}, status=status.HTTP_200_OK)
 
 
 class ImageUploadAndDeleteView(APIView):

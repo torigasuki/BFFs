@@ -10,6 +10,7 @@ from .views import (
     GroupPurchaseCreateView,
     GroupPurchaseDetailView,
     ImageUploadAndDeleteView,
+    GroupPurchaseCommentView,
 )
 
 urlpatterns = [
@@ -60,4 +61,16 @@ urlpatterns = [
         name="grouppurchase_put_delete_view",
     ),
     path("image/upload/", ImageUploadAndDeleteView.as_view(), name="image_upload_view"),
+    # purchase comment 생성
+    path(
+        "<int:grouppurchase_id>/purchasecomment/",
+        GroupPurchaseCommentView.as_view(),
+        name="purchase_comment_create_view",
+    ),
+    # comment 수정 삭제
+    path(
+        "purchasecomment/<int:purchase_comment_id>/",
+        GroupPurchaseCommentView.as_view(),
+        name="purchase_comment_put_delete_view",
+    ),
 ]

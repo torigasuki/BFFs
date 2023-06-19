@@ -1,7 +1,15 @@
 from django.utils import timezone
 from rest_framework import serializers
 
-from feed.models import Category, Comment, Cocomment, Feed, GroupPurchase, JoinedUser
+from feed.models import (
+    Category,
+    Comment,
+    Cocomment,
+    Feed,
+    GroupPurchase,
+    JoinedUser,
+    GroupPurchaseComment,
+)
 from user.models import Profile
 
 
@@ -18,11 +26,15 @@ class CategorySerializer(serializers.ModelSerializer):
 class CocommentSerializer(serializers.ModelSerializer):
     """대댓글 serializer"""
 
+    user_id = serializers.SerializerMethodField()
+    nickname = serializers.SerializerMethodField()
+
     class Meta:
         model = Cocomment
         fields = [
             "id",
-            "user",
+            "user_id",
+            "nickname",
             "text",
             "created_at",
             "updated_at",
@@ -33,6 +45,12 @@ class CocommentSerializer(serializers.ModelSerializer):
             "created_at": {"read_only": True},
             "updated_at": {"read_only": True},
         }
+
+    def get_user_id(self, obj):
+        return Profile.objects.get(user=obj.user).id
+
+    def get_nickname(self, obj):
+        return Profile.objects.get(user=obj.user).nickname
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -178,20 +196,31 @@ class FeedNotificationSerializer(serializers.ModelSerializer):
 class GroupPurchaseListSerializer(serializers.ModelSerializer):
     """공구 게시글 list serializer"""
 
+    grouppurchase_status = serializers.SerializerMethodField()
+
     class Meta:
         model = GroupPurchase
         fields = [
             "title",
             "product_name",
             "person_limit",
-            "is_joined",
             "location",
             "user",
             "open_at",
             "close_at",
             "is_ended",
             "created_at",
+            "grouppurchase_status",
         ]
+
+    def get_grouppurchase_status(self, data):
+        now = timezone.now
+        if data.is_ended == True:
+            return "종료"
+        if data.is_ended == False and data.close_at < now and data.open_at > now:
+            return "진행 중"
+        if data.is_ended == False and data.open_at < now:
+            return "시작 전"
 
 
 class GroupPurchaseDetailSerializer(serializers.ModelSerializer):
@@ -271,3 +300,33 @@ class FeedSearchSerializer(serializers.ModelSerializer):
             "image",
             "video",
         ]
+
+
+class GroupPurchaseCommentSerializer(serializers.ModelSerializer):
+    """공구 댓글 serializer"""
+
+    user_id = serializers.SerializerMethodField()
+    nickname = serializers.SerializerMethodField()
+
+    class Meta:
+        model = GroupPurchaseComment
+        fields = [
+            "id",
+            "user_id",
+            "nickname",
+            "text",
+            "created_at",
+            "updated_at",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "user": {"read_only": True},
+            "created_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+
+    def get_user_id(self, obj):
+        return Profile.objects.get(user=obj.user).id
+
+    def get_nickname(self, obj):
+        return Profile.objects.get(user=obj.user).nickname
