@@ -18,7 +18,6 @@ from .serializers import (
     CommunityUpdateSerializer,
     CommunityAdminCreateSerializer,
     ForbiddenWordSerializer,
-    SearchUserSerializer,
 )
 
 
@@ -237,41 +236,6 @@ class SearchCommunityView(ListAPIView):
     filter_backends = [filters.SearchFilter]
     search_fields = ["title", "communityurl", "introduction"]
     pagination_class = None
-
-
-class FeedNextView(APIView):
-    """피드 다음 글"""
-
-    def get(self, request, community_url, feed_id):
-        community = Community.objects.get(communityurl=community_url)
-        feed_list = Feed.objects.filter(
-            category__community=community, id__gt=feed_id
-        ).order_by("created_at")
-        if not feed_list:
-            return Response({"message": "다음 게시글이 없습니다"})
-        return redirect("feed_detail_view", community_url, feed_list.first().id)
-
-
-class FeedPrevView(APIView):
-    """피드 이전 글"""
-
-    def get(self, request, community_url, feed_id):
-        community = Community.objects.get(communityurl=community_url)
-        feed_list = Feed.objects.filter(
-            category__community=community, id__lt=feed_id
-        ).order_by("-created_at")
-        if not feed_list:
-            return Response({"message": "이전 게시글이 없습니다"})
-        return redirect("feed_detail_view", community_url, feed_list.first().id)
-
-
-class SearchUserView(ListAPIView):
-    """유저 조회 및 검색"""
-
-    queryset = User.objects.all()
-    serializer_class = SearchUserSerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ["name"]
 
 
 class FeedNextView(APIView):
