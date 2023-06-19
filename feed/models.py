@@ -1,3 +1,4 @@
+from typing import Any
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -61,17 +62,24 @@ class Category(models.Model):
         return self.category_name
 
 
+# 댓글 틀!
+class CommentBaseModel(models.Model):
+    text = models.CharField(max_length=500)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+
 # 댓글 모델
-class Comment(models.Model):
+class Comment(CommentBaseModel):
     feed = models.ForeignKey(Feed, related_name="comment", on_delete=models.CASCADE)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="comment_author",
     )
-    text = models.CharField(max_length=500)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "댓글(Comment)"
@@ -82,7 +90,7 @@ class Comment(models.Model):
 
 
 # 대댓글 모델
-class Cocomment(models.Model):
+class Cocomment(CommentBaseModel):
     comment = models.ForeignKey(
         Comment, related_name="cocomment", on_delete=models.CASCADE, blank=True
     )
@@ -91,9 +99,6 @@ class Cocomment(models.Model):
         on_delete=models.CASCADE,
         related_name="cocomment_author",
     )
-    text = models.CharField(max_length=500)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "대댓글(Cocomment)"
@@ -126,12 +131,12 @@ class GroupPurchase(models.Model, HitCountMixin):
     open_at = models.DateTimeField(null=False, help_text="모집 시작")
     close_at = models.DateTimeField(null=True, help_text="모집 종료")
     END_CHOICES = (
-        ("continue", "공구를 계속 진행할 거예요"),
-        ("quit", "공구를 진행 하지 않을 거예요"),
-        ("discuss", "신청한 사람과 논의 후 결정할래요"),
-        ("maybe", "종료 후 고민해보고 결정할래요"),
+        ("공구를 계속 진행할 거예요", "continue"),
+        ("공구를 진행하지 않을 거예요", "quit"),
+        ("신청한 사람과 논의 후 결정할래요", "discuss"),
+        ("종료 후 고민해보고 결정할래요", "maybe"),
     )
-    end_option = models.CharField(choices=END_CHOICES, max_length=8)
+    end_option = models.CharField(choices=END_CHOICES, max_length=20)
 
     community = models.ForeignKey(
         Community, on_delete=models.CASCADE, related_name="community_purchases"
@@ -212,3 +217,21 @@ class Image(models.Model):
             new_name = change_image_name(self, self.image.name)
             self.image.name = new_name
         super(Image, self).save(*args, **kwargs)
+
+
+class GroupPurchaseComment(CommentBaseModel):
+    grouppurchase = models.ForeignKey(
+        GroupPurchase, related_name="p_comment", on_delete=models.CASCADE
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="p_comment_author",
+    )
+
+    class Meta:
+        verbose_name = "공구 댓글(GroupPurchaseComment)"
+        verbose_name_plural = "공구 댓글(GroupPurchaseComment)"
+
+    def __str__(self):
+        return self.text
