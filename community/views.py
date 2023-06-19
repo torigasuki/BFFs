@@ -18,6 +18,7 @@ from .serializers import (
     CommunityUpdateSerializer,
     CommunityAdminCreateSerializer,
     ForbiddenWordSerializer,
+    SearchUserSerializer,
 )
 
 
