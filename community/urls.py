@@ -9,8 +9,6 @@ from .views import (
     CommunityCategoryView,
     FeedNextView,
     FeedPrevView,
-    FeedNextView,
-    FeedPrevView,
 )
 from feed.views import (
     FeedListView,
