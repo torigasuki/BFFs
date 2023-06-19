@@ -292,6 +292,7 @@ class GroupPurchaseCreateSerializer(serializers.ModelSerializer):
             "end_option",
         ]
         extra_kwargs = {
+            "user": {"read_only": True},
             "community": {"read_only": True},
             "category": {"read_only": True},
         }

@@ -513,6 +513,27 @@ class GroupPurchaseJoinedUserView(APIView):
             )
 
 
+class GroupPurchaseSelfEndView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, grouppurchase_id):
+        purchase = get_object_or_404(GroupPurchase, id=grouppurchase_id)
+        if purchase.is_ended == True:
+            return Response(
+                {"message": "이미 종료된 공구 게시글입니다"},
+                status=status.HTTP_405_METHOD_NOT_ALLOWED,
+            )
+        serializer = GroupPurchaseDetailSerializer(purchase, data=request.data)
+        if serializer.is_valid():
+            serializer.save(is_ended=True)
+            return Response(
+                {"message": "공동구매 모집을 종료했습니다", "data": serializer.data},
+                status=status.HTTP_202_ACCEPTED,
+            )
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class GroupPurchaseCommentView(APIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 

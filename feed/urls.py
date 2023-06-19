@@ -11,6 +11,7 @@ from .views import (
     GroupPurchaseDetailView,
     ImageUploadAndDeleteView,
     GroupPurchaseCommentView,
+    GroupPurchaseSelfEndView,
 )
 
 urlpatterns = [
@@ -61,13 +62,19 @@ urlpatterns = [
         name="grouppurchase_put_delete_view",
     ),
     path("image/upload/", ImageUploadAndDeleteView.as_view(), name="image_upload_view"),
-    # purchase comment 생성
+    # grouppurchase 작성자 모집 끝 옵션
+    path(
+        "<int:grouppurchase_id>/self_end/",
+        GroupPurchaseSelfEndView.as_view(),
+        name="purchase_self_end_view",
+    ),
+    # grouppurchase comment 생성
     path(
         "<int:grouppurchase_id>/purchasecomment/",
         GroupPurchaseCommentView.as_view(),
         name="purchase_comment_create_view",
     ),
-    # comment 수정 삭제
+    # grouppurchase comment 수정 삭제
     path(
         "purchasecomment/<int:purchase_comment_id>/",
         GroupPurchaseCommentView.as_view(),
