@@ -199,7 +199,7 @@ class JoinedUser(models.Model):
         verbose_name_plural = "공구지원자 현황(JoinedUser)"
 
     def __str__(self):
-        return f"실명 :{self.profile.user.name} ({self.profile.region})"
+        return f"실명 :{self.user.name} ({self.user.profile.region})"
 
 
 def change_image_name(instance, filename):

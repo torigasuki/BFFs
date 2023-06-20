@@ -390,6 +390,7 @@ class GroupPurchaseDetailView(APIView):
         else:
             serializer = GroupPurchaseCreateSerializer(purchasefeed, data=request.data)
             if serializer.is_valid():
+                serializer.validate_datetime_update(request.data)
                 serializer.save(user=request.user)
                 return Response(
                     {"message": "공구 게시글이 수정되었습니다"}, status=status.HTTP_200_OK
@@ -450,8 +451,12 @@ class GroupPurchaseJoinedUserView(APIView):
         join_purchase = JoinedUser.objects.filter(
             user_id=request.user.id, grouppurchase_id=grouppurchase_id
         ).last()
+        quantity = int(request.data.__getitem__("product_quantity"))
         if not request.user.profile.region:
-            return Response({"error": "유저 프로필을 업데이트 해주세요! 상세 정보가 없으면 공구를 진행할 수 없습니다."})
+            return Response(
+                {"error": "유저 프로필을 업데이트 해주세요! 상세 정보가 없으면 공구를 진행할 수 없습니다."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         if purchasefeed.check_end_person_limit_point(grouppurchase_id):
             return Response(
                 {"message": "공구 인원이 모두 찼습니다!"},
@@ -462,7 +467,11 @@ class GroupPurchaseJoinedUserView(APIView):
                 {"message": "이미 종료된 공구입니다!"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        if not join_purchase and joined_user.product_quantity > 0:
+        if not join_purchase:
+            if quantity < 1:
+                return Response(
+                    {"message": "수량을 다시 확인해주세요."}, status=status.HTTP_400_BAD_REQUEST
+                )
             serializer = JoinedUserCreateSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save(user=request.user, grouppurchase_id=grouppurchase_id)
@@ -476,7 +485,6 @@ class GroupPurchaseJoinedUserView(APIView):
                 status=status.HTTP_201_CREATED,
             )
         # True
-        quantity = request.data.__getitem__("product_quantity")
         joined_user = JoinedUser.objects.get(
             user_id=request.user.id, grouppurchase_id=grouppurchase_id
         )
@@ -495,7 +503,7 @@ class GroupPurchaseJoinedUserView(APIView):
                 {"message": "공구를 재 신청했습니다.", "data": serializer.data},
                 status=status.HTTP_202_ACCEPTED,
             )
-        if quantity == 0:
+        if quantity <= 0:
             serializer.save(is_deleted=True)
             return Response(
                 {"message": "공구 신청을 취소했습니다.", "data": serializer.data},

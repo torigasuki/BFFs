@@ -310,6 +310,17 @@ class GroupPurchaseCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"error": "공구가 끝나는 시간보다 이후의 시점을 선택해주세요."})
         return data
 
+    def validate_datetime_update(self, data):
+        now = datetime.now()
+        open_at = datetime.strptime(data.get("open_at"), "%Y-%m-%dT%H:%M:%S")
+        close_at = datetime.strptime(data.get("close_at"), "%Y-%m-%dT%H:%M:%S")
+        meeting_at = datetime.strptime(data.get("meeting_at"), "%Y-%m-%dT%H:%M:%S")
+        if close_at and now > close_at and open_at > close_at:
+            raise serializers.ValidationError({"error": "현재보다 이후의 시점을 선택해주세요."})
+        if close_at and meeting_at < close_at:
+            raise serializers.ValidationError({"error": "공구가 끝나는 시간보다 이후의 시점을 선택해주세요."})
+        return data
+
 
 class JoinedUserCreateSerializer(serializers.ModelSerializer):
     class Meta:
