@@ -405,7 +405,6 @@ class GroupPurchaseDetailView(APIView):
                 {"error": "공구 게시글 작성자만 삭제할 수 있습니다."}, status=status.HTTP_403_FORBIDDEN
             )
         else:
-            print(purchasefeed.is_ended)
             if purchasefeed.is_ended == False:
                 purchasefeed.delete()
                 return Response(
