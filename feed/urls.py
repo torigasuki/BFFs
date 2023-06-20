@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import (
+    FeedSearchView,
     FeedAllView,
     FeedDetailView,
     FeedCreateView,
@@ -15,6 +16,7 @@ from .views import (
 )
 
 urlpatterns = [
+    path("search", FeedSearchView.as_view(), name="search_community_view"),
     # 전체 feed 조회
     path("", FeedAllView.as_view(), name="feed_view"),
     # 개별 feed 수정 삭제
