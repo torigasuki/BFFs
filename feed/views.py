@@ -373,15 +373,12 @@ class FeedNotificationView(APIView):
 
 class FeedSearchView(ListAPIView):
     search_fields = (
-        "user",
         "title",
         "content",
-        "created_at",
-        "text",
     )
-    filter_backends = filters.SearchFilter
+    filter_backends = [filters.SearchFilter]
     queryset = Feed.objects.all()
-    serializer_class = FeedListSerializer, CommentSerializer
+    serializer_class = FeedListSerializer
 
 
 class GroupPurchaseCreateView(APIView):
