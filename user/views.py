@@ -142,20 +142,46 @@ class NaverCallbackView(APIView):
 
 class GoogleLoginView(APIView):
     def get(self, request):
-        CLIENT_ID = config("KAKAO_CLIENT_ID")
+        CLIENT_ID = config("GOOGLE_CLIENT_ID")
         BACKEND_URL = config("BACKEND_URL")
         CALLBACK_URL = BACKEND_URL + "/user/google/callback/"
-        URL = "https://accounts.google.com/o/oauth2/v2/auth"
+        URL = f"https://accounts.google.com/o/oauth2/v2/auth?scope=openid%20email%20profile&access_type=offline&include_granted_scopes=true&response_type=code&redirect_uri={CALLBACK_URL}&client_id={CLIENT_ID}"
         return Response(
-            {"url": URL, "redirecturi": CALLBACK_URL, "client_id": CLIENT_ID},
+            {"url": URL},
             status=status.HTTP_200_OK,
         )
 
 
 class GoogleCallbackView(APIView):
     def get(self, request):
-        code = request.GET.get("code")
-        pass
+        CLIENT_ID = config("GOOGLE_CLIENT_ID")
+        CLIENT_SECRET = config("GOOGLE_CLIENT_SECRET")
+        CODE = request.GET.get("code")
+        BACKEND_URL = config("BACKEND_URL")
+        CALLBACK_URL = BACKEND_URL + "/user/google/callback/"
+        URL = f"https://oauth2.googleapis.com/token?code={CODE}&client_id={CLIENT_ID}&client_secret={CLIENT_SECRET}&redirect_uri={CALLBACK_URL}&grant_type=authorization_code"
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        response = requests.post(URL, headers=headers)
+        response_json = response.json()
+        access_token = response_json.get("access_token")
+        headers = {"Authorization": f"Bearer {access_token}"}
+
+        TOKEN_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
+        user_response = requests.get(TOKEN_URL, headers=headers)
+        user_data = user_response.json()
+
+        email = user_data.get("email")
+        name = user_data.get("name")
+        nickname = user_data.get("name")
+        profileimage = user_data.get("picture")
+        social = "google"
+        return socialLogin(
+            name=name,
+            email=email,
+            nickname=nickname,
+            profileimage=profileimage,
+            login_type=social,
+        )
 
 
 class KakaoLoginView(APIView):
@@ -238,6 +264,8 @@ def get_token(user):
 
 
 class ProfileView(APIView):
+    permission_classes = [permissions.AllowAny]
+
     def get(self, request):
         profile = Profile.objects.all()
         profile_serializer = UserProfileSerializer(profile, many=True)
@@ -246,6 +274,8 @@ class ProfileView(APIView):
 
 # 프로필 id 받아오는 거로 수정할 예정!!!!!!!!!!!!!!!!!!
 class ProfileDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
     def get(self, request, user_id):
         profile = Profile.objects.get(user_id=user_id)
         profile_serializer = UserProfileSerializer(profile)
@@ -307,6 +337,8 @@ class ProfileDetailView(APIView):
 
 
 class GuestBookView(APIView):
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
     def get(self, request, profile_id):
         profile = Profile.objects.get(id=profile_id)
         comments = profile.comment_set.all()
@@ -323,6 +355,8 @@ class GuestBookView(APIView):
 
 
 class GuestBookDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def patch(self, request, profile_id, guestbook_id):
         comment = GuestBook.objects.get(id=guestbook_id)
         if request.user == comment.user:
