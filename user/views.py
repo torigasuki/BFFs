@@ -135,9 +135,16 @@ class NaverCallbackView(APIView):
         user_data = user_response_json.get("response")
         email = user_data.get("email")
         name = user_data.get("name")
-        profileimage = user_data.get("profile_image_url")
+        nickname = user_data.get("nickname") or name
+        profileimage = user_data.get("profile_image")
         social = "naver"
-        return socialLogin(name=name, email=email, login_type=social)
+        return socialLogin(
+            name=name,
+            email=email,
+            login_type=social,
+            profileimage=profileimage,
+            nickname=nickname,
+        )
 
 
 class GoogleLoginView(APIView):
@@ -240,10 +247,8 @@ def socialLogin(**kwargs):
     if User.objects.filter(email=kwargs.get("email")).exists():
         user = User.objects.get(email=kwargs.get("email"))
         if user.login_type != kwargs.get("login_type"):
-            return Response(
-                {"error": "선택한 소셜계정 외 다른 가입방법으로 가입된 이메일입니다."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            callback_url = f"{config('FRONTEND_URL')}/user/login?error=400"
+            return redirect(callback_url)
         else:
             return get_token(user)
     else:
