@@ -46,7 +46,6 @@ def send_text(request, user_input, ai_chat):
     )
     # json response에서 필요한 부분만 불러옴
 
-    print(gpt_prompt)
     return prompt["choices"][0]["message"]["content"]
 
 
