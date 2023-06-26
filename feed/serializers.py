@@ -49,7 +49,7 @@ class CocommentSerializer(serializers.ModelSerializer):
         }
 
     def get_nickname(self, obj):
-        return Profile.objects.get(id=obj.user_id).nickname
+        return Profile.objects.get(user=obj.user).nickname
 
     def get_user_id(self, obj):
         return Profile.objects.get(user=obj.user).id
