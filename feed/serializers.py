@@ -306,23 +306,23 @@ class GroupPurchaseDetailSerializer(serializers.ModelSerializer):
         is_ended = obj.is_ended
         open_at = datetime.strptime(str(obj.open_at), "%Y-%m-%d %H:%M:%S")
         if not obj.close_at:
-            if is_ended == True:
+            if is_ended:
                 return "종료"
-            elif is_ended == False and open_at > now:
+            elif not is_ended and open_at > now:
                 return "시작 전"
-            elif is_ended == False and open_at < now:
+            elif not is_ended and open_at < now:
                 return "진행 중"
 
         else:
             close_at = datetime.strptime(str(obj.close_at), "%Y-%m-%d %H:%M:%S")
-            if is_ended == True:
+            if is_ended:
                 return "종료"
             elif close_at < now:
                 # cron 작동 안했을 경우에도 종료 시간에따라 종료를 띄워주기
                 return "종료"
-            elif is_ended == False and open_at > now:
+            elif not is_ended and open_at > now:
                 return "시작 전"
-            elif close_at and is_ended == False and close_at > now and open_at < now:
+            elif close_at and not is_ended and close_at > now and open_at < now:
                 return "진행 중"
 
 
