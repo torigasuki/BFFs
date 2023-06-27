@@ -2,7 +2,7 @@ from rest_framework import serializers
 from decouple import config
 
 from user.models import User
-from feed.models import Feed
+from feed.models import Feed, Category
 from feed.serializers import FeedTitleSerializer
 from .models import Community, CommunityAdmin, ForbiddenWord
 from .validators import can_only_eng_and_int
@@ -117,6 +117,12 @@ class CommunityCreateSerializer(serializers.ModelSerializer):
             introduction=introduction,
             image=image,
         )
+        category_data1 = {"id": 1, "category_name": "얘기해요", "category_url": "talk"}
+        category_data2 = {"id": 2, "category_name": "모집해요", "category_url": "join"}
+        category_data3 = {"id": 3, "category_name": "공구해요", "category_url": "groupbuy"}
+        Category.objects.create(community=community, **category_data1)
+        Category.objects.create(community=community, **category_data2)
+        Category.objects.create(community=community, **category_data3)
         return community
 
     def get_imageurl(self, obj):
