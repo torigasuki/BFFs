@@ -278,7 +278,7 @@ class FeedDetailView(APIView):
         )
         comment_serializer = CommentSerializer(comment, many=True)
 
-        feed.click
+        feed.click()
 
         response = {
             "feed": feed_serializer.data,
@@ -426,7 +426,7 @@ class GroupPurchaseDetailView(APIView):
         serializer = GroupPurchaseDetailSerializer(purchasefeed)
         purchase_comment = purchasefeed.p_comment.all().order_by("created_at")
         # 댓글 유무 여부 확인
-        purchasefeed.click
+        purchasefeed.click()
         if not purchase_comment:
             return Response(
                 {

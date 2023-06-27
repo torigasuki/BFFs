@@ -56,6 +56,8 @@ class CocommentSerializer(serializers.ModelSerializer):
 
 
 class CommentCreateSerializer(serializers.ModelSerializer):
+    """댓글 생성 serializer"""
+
     class Meta:
         model = Comment
         fields = [
@@ -103,6 +105,8 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class FeedTitleSerializer(serializers.ModelSerializer):
+    """feed 제목 serializer"""
+
     class Meta:
         model = Feed
         fields = [
