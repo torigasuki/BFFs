@@ -367,7 +367,7 @@ class FeedNotificationView(APIView):
         serializer = FeedNotificationSerializer(feed, data=request.data)
         is_notificated = serializer.post_is_notification(feed, community, request)
         serializer.is_valid(raise_exception=True)
-        if is_notificated == True:
+        if is_notificated:
             serializer.save(is_notification=False)
             return Response(
                 {"data": serializer.data, "message": "게시글 상태가 변경되었습니다"},
@@ -473,7 +473,7 @@ class GroupPurchaseDetailView(APIView):
                 {"error": "공구 게시글 작성자만 삭제할 수 있습니다."}, status=status.HTTP_403_FORBIDDEN
             )
         else:
-            if purchasefeed.is_ended == False:
+            if not purchasefeed.is_ended:
                 purchasefeed.delete()
                 return Response(
                     {"message": "공동구매 게시글을 삭제했습니다."}, status=status.HTTP_200_OK
@@ -529,7 +529,7 @@ class GroupPurchaseJoinedUserView(APIView):
                 {"message": "공구 인원이 모두 찼습니다!"},
                 status=status.HTTP_405_METHOD_NOT_ALLOWED,
             )
-        if purchasefeed.is_ended == True:
+        if purchasefeed.is_ended:
             return Response(
                 {"message": "이미 종료된 공구입니다!"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -596,7 +596,7 @@ class GroupPurchaseSelfEndView(APIView):
 
     def post(self, request, grouppurchase_id):
         purchase = get_object_or_404(GroupPurchase, id=grouppurchase_id)
-        if purchase.is_ended == True:
+        if purchase.is_ended:
             return Response(
                 {"message": "이미 종료된 공구 게시글입니다"},
                 status=status.HTTP_405_METHOD_NOT_ALLOWED,
