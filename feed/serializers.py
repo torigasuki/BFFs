@@ -114,6 +114,8 @@ class FeedTitleSerializer(serializers.ModelSerializer):
 
 
 class FeedListSerializer(serializers.ModelSerializer):
+    """feed 리스트 serializer"""
+
     nickname = serializers.SerializerMethodField()
     category = serializers.SerializerMethodField()
     comments_count = serializers.SerializerMethodField()
@@ -239,8 +241,8 @@ class FeedNotificationSerializer(serializers.ModelSerializer):
             "is_notification",
         ]
 
-    # is_admin여부를 확인해 공지글로 바꾸어줄 수 있도록 구현
     def post_is_notification(self, obj, community, request):
+        """공지 field 상태 check"""
         if obj.is_notification == False:
             return False
         elif obj.is_notification == True:
@@ -268,6 +270,7 @@ class GroupPurchaseListSerializer(serializers.ModelSerializer):
         ]
 
     def get_grouppurchase_status(self, obj):
+        """공구 게시글 상태 check"""
         now = datetime.now()
         is_ended = obj.is_ended
         open_at = datetime.strptime(str(obj.open_at), "%Y-%m-%d %H:%M:%S")
@@ -302,6 +305,7 @@ class GroupPurchaseDetailSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def get_grouppurchase_status(self, obj):
+        """공구 게시글 상태 check"""
         now = datetime.now()
         is_ended = obj.is_ended
         open_at = datetime.strptime(str(obj.open_at), "%Y-%m-%d %H:%M:%S")
@@ -312,7 +316,6 @@ class GroupPurchaseDetailSerializer(serializers.ModelSerializer):
                 return "시작 전"
             elif not is_ended and open_at < now:
                 return "진행 중"
-
         else:
             close_at = datetime.strptime(str(obj.close_at), "%Y-%m-%d %H:%M:%S")
             if is_ended:
@@ -352,6 +355,7 @@ class GroupPurchaseCreateSerializer(serializers.ModelSerializer):
         }
 
     def validate_datetime(self, data):
+        """공구 create 시 시간유효성 validate"""
         now = datetime.now()
         open_at = datetime.strptime(data.get("open_at"), "%Y-%m-%dT%H:%M:%S")
         close_at = datetime.strptime(data.get("close_at"), "%Y-%m-%dT%H:%M:%S")
@@ -365,6 +369,7 @@ class GroupPurchaseCreateSerializer(serializers.ModelSerializer):
         return data
 
     def validate_datetime_update(self, data):
+        """공구 update 시 시간유효성 validate"""
         now = datetime.now()
         open_at = datetime.strptime(data.get("open_at"), "%Y-%m-%dT%H:%M:%S")
         close_at = datetime.strptime(data.get("close_at"), "%Y-%m-%dT%H:%M:%S")
@@ -377,6 +382,8 @@ class GroupPurchaseCreateSerializer(serializers.ModelSerializer):
 
 
 class JoinedUserCreateSerializer(serializers.ModelSerializer):
+    """공구 참여유저 생성 serializer"""
+
     class Meta:
         model = JoinedUser
         fields = [
@@ -391,6 +398,8 @@ class JoinedUserCreateSerializer(serializers.ModelSerializer):
 
 
 class JoinedUserSerializer(serializers.ModelSerializer):
+    """공구 참여유저 serializer"""
+
     class Meta:
         model = JoinedUser
         fields = "__all__"

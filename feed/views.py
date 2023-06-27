@@ -70,7 +70,8 @@ class CustomPagination(PageNumberPagination):
 
 
 class CommentView(APIView):
-    # comment CUD view
+    """Feed 댓글 CUD view"""
+
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, feed_id):
@@ -113,7 +114,8 @@ class CommentView(APIView):
 
 
 class CocommentView(APIView):
-    # 대댓글 cocomment CRUD view
+    """Feed 대댓글 CRUD view"""
+
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get(self, request, comment_id):
@@ -163,7 +165,8 @@ class CocommentView(APIView):
 
 
 class FeedAllView(APIView):
-    # feed 전체 리스트 view
+    """feed 전체 리스트 view"""
+
     def get(self, request):
         feeds = Feed.objects.all().order_by("-created_at")[:3]
         serializer = FeedListSerializer(feeds, many=True)
@@ -171,9 +174,10 @@ class FeedAllView(APIView):
 
 
 class FeedListView(APIView):
+    """feed 전체 리스트 view"""
+
     pagination_class = CustomPagination()
 
-    # feed 전체 리스트 view
     def get(self, request, community_url):
         community = Community.objects.get(communityurl=community_url)
         feed_list = Feed.objects.filter(category__community=community).order_by(
@@ -195,9 +199,10 @@ class FeedListView(APIView):
 
 
 class FeedCategoryListView(APIView):
+    """feed 카테고리 리스트 view"""
+
     pagination_class = CustomPagination()
 
-    # feed 카테고리 리스트 view
     def get(self, request, community_url, category_url):
         community_introduction = get_object_or_404(
             Community, communityurl=community_url
@@ -238,9 +243,10 @@ class FeedCategoryListView(APIView):
 
 
 class FeedDetailView(APIView):
-    # feed 상세보기, 수정, 삭제 view
-    # 조회수 기능을 위한 모델 세팅
+    """feed 상세보기, 수정, 삭제 view"""
+
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    # 조회수 기능을 위한 모델 세팅
     model = Feed
 
     # feed 상세 및 comment,cocomment 함께 가져오기
@@ -311,7 +317,8 @@ class FeedDetailView(APIView):
 
 
 class FeedCreateView(APIView):
-    # feed 생성 view
+    """feed 생성 view"""
+
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, category_id):  # testcomu
@@ -325,7 +332,8 @@ class FeedCreateView(APIView):
 
 
 class LikeView(APIView):
-    # 좋아요 기능
+    """좋아요 기능"""
+
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, feed_id):
@@ -339,6 +347,8 @@ class LikeView(APIView):
 
 
 class FeedNotificationView(APIView):
+    """권한에 따라 Feed 공지글 설정/취소"""
+
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, community_url, feed_id):
@@ -372,6 +382,8 @@ class FeedNotificationView(APIView):
 
 
 class FeedSearchView(ListAPIView):
+    """Feed 검색"""
+
     search_fields = (
         "title",
         "content",
@@ -382,7 +394,7 @@ class FeedSearchView(ListAPIView):
 
 
 class GroupPurchaseCreateView(APIView):
-    """공구 create"""
+    """공구 게시글 생성 view"""
 
     permission_classes = [permissions.IsAuthenticated]
 
@@ -400,14 +412,14 @@ class GroupPurchaseCreateView(APIView):
 
 
 class GroupPurchaseDetailView(APIView):
-    """공구 detail get, update, delete"""
+    """공구 상세 get, update, delete view"""
 
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     # 조회수 기능을 위한 모델 세팅
     model = GroupPurchase
 
-    # feed 상세 및 comment,cocomment 함께 가져오기
+    # 공구 상세 및 comment,cocomment 함께 가져오기
     def get(self, request, community_url, grouppurchase_id):
         purchasefeed = get_object_or_404(GroupPurchase, id=grouppurchase_id)
         community = Community.objects.get(communityurl=community_url)
@@ -474,7 +486,7 @@ class GroupPurchaseDetailView(APIView):
 
 
 class GroupPurchaseListView(APIView):
-    """공구 list"""
+    """공구 list view"""
 
     def get(self, request, community_url):
         community = Community.objects.get(communityurl=community_url)
@@ -496,7 +508,7 @@ class GroupPurchaseListView(APIView):
 
 
 class GroupPurchaseJoinedUserView(APIView):
-    """공구 참여 유저 생성, 수정 및 취소 view"""
+    """공구 참여 유저 CUD view"""
 
     permission_classes = [permissions.IsAuthenticated]
 
@@ -578,6 +590,8 @@ class GroupPurchaseJoinedUserView(APIView):
 
 
 class GroupPurchaseSelfEndView(APIView):
+    """작성유저 공구 종료 view"""
+
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, grouppurchase_id):
@@ -599,6 +613,8 @@ class GroupPurchaseSelfEndView(APIView):
 
 
 class GroupPurchaseCommentView(APIView):
+    """공구게시글 댓글 CUD view"""
+
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def post(self, request, grouppurchase_id):

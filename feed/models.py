@@ -11,8 +11,9 @@ import os
 from uuid import uuid4
 
 
-# 일반 feed 모델
 class Feed(models.Model, HitCountMixin):
+    """일반 게시글 모델"""
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="author"
     )
@@ -46,8 +47,9 @@ class Feed(models.Model, HitCountMixin):
         verbose_name_plural = "일반 게시글(Feed)"
 
 
-# community 내 feed에 대한 카테고리 모델, 전체/자유/모집/공구
 class Category(models.Model):
+    """커뮤니티 내 게시글 카테고리 모델, 커뮤 생성시 기본 3개 생성"""
+
     community = models.ForeignKey(
         Community, on_delete=models.CASCADE, related_name="community_category"
     )
@@ -62,8 +64,9 @@ class Category(models.Model):
         return self.category_name
 
 
-# 댓글 틀!
 class CommentBaseModel(models.Model):
+    """댓글 기본 모델"""
+
     text = models.CharField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -72,8 +75,9 @@ class CommentBaseModel(models.Model):
         abstract = True
 
 
-# 댓글 모델
 class Comment(CommentBaseModel):
+    """댓글 모델"""
+
     feed = models.ForeignKey(Feed, related_name="comment", on_delete=models.CASCADE)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -89,8 +93,9 @@ class Comment(CommentBaseModel):
         return self.text
 
 
-# 대댓글 모델
 class Cocomment(CommentBaseModel):
+    """대댓글 모델"""
+
     comment = models.ForeignKey(
         Comment, related_name="cocomment", on_delete=models.CASCADE, blank=True
     )
@@ -108,8 +113,9 @@ class Cocomment(CommentBaseModel):
         return self.text
 
 
-# 공구 게시글
 class GroupPurchase(models.Model, HitCountMixin):
+    """공동구매 게시글 모델"""
+
     title = models.CharField(max_length=50)
     content = models.TextField(blank=True)
     product_name = models.CharField(max_length=50)
@@ -180,13 +186,30 @@ class GroupPurchase(models.Model, HitCountMixin):
             else:
                 return False
 
-    def check_end_time_limit_point(self):
-        """cron을 사용하여 ended_at=기간이 지났을 경우 모집 종료"""
-        pass
+
+class GroupPurchaseComment(CommentBaseModel):
+    """공구 댓글 모델"""
+
+    grouppurchase = models.ForeignKey(
+        GroupPurchase, related_name="p_comment", on_delete=models.CASCADE
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="p_comment_author",
+    )
+
+    class Meta:
+        verbose_name = "공구 댓글(GroupPurchaseComment)"
+        verbose_name_plural = "공구 댓글(GroupPurchaseComment)"
+
+    def __str__(self):
+        return self.text
 
 
-# 공구에 참여한 유저 모델
 class JoinedUser(models.Model):
+    """공구에 참여한 유저 모델"""
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user")
     grouppurchase = models.ForeignKey(
         GroupPurchase, on_delete=models.CASCADE, related_name="joined_user"
@@ -217,21 +240,3 @@ class Image(models.Model):
             new_name = change_image_name(self, self.image.name)
             self.image.name = new_name
         super(Image, self).save(*args, **kwargs)
-
-
-class GroupPurchaseComment(CommentBaseModel):
-    grouppurchase = models.ForeignKey(
-        GroupPurchase, related_name="p_comment", on_delete=models.CASCADE
-    )
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="p_comment_author",
-    )
-
-    class Meta:
-        verbose_name = "공구 댓글(GroupPurchaseComment)"
-        verbose_name_plural = "공구 댓글(GroupPurchaseComment)"
-
-    def __str__(self):
-        return self.text
