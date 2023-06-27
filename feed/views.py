@@ -422,32 +422,23 @@ class GroupPurchaseDetailView(APIView):
     # 공구 상세 및 comment,cocomment 함께 가져오기
     def get(self, request, community_url, grouppurchase_id):
         purchasefeed = get_object_or_404(GroupPurchase, id=grouppurchase_id)
+        purchase_serializer = GroupPurchaseDetailSerializer(purchasefeed)
         community = Community.objects.get(communityurl=community_url)
-        serializer = GroupPurchaseDetailSerializer(purchasefeed)
+        commnity_serializer = CommunityUrlSerializer(
+            community, context={"request": request}
+        )
         purchase_comment = purchasefeed.p_comment.all().order_by("created_at")
-        # 댓글 유무 여부 확인
+        comment_serializer = CommentSerializer(purchase_comment, many=True)
+
         purchasefeed.click()
-        if not purchase_comment:
-            return Response(
-                {
-                    "message": "조회수 +1",
-                    "grouppurchasefeed": serializer.data,
-                    "comment": "아직 댓글이 없습니다",
-                },
-                status=status.HTTP_200_OK,
-            )
-        else:
-            purchase_comment_serializer = GroupPurchaseCommentSerializer(
-                purchase_comment, many=True
-            )
-            return Response(
-                {
-                    "message": "조회수 +1",
-                    "grouppurchasefeed": serializer.data,
-                    "comment": purchase_comment_serializer.data,
-                },
-                status=status.HTTP_200_OK,
-            )
+
+        response = {
+            "grouppurchase": purchase_serializer.data,
+            "community": commnity_serializer.data,
+        }
+        # 댓글 유무 여부 확인
+        response["comment"] = comment_serializer.data or "아직 댓글이 없습니다"
+        return Response(response, status=status.HTTP_200_OK)
 
     def put(self, request, grouppurchase_id):
         purchasefeed = get_object_or_404(GroupPurchase, id=grouppurchase_id)
