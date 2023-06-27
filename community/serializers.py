@@ -97,10 +97,16 @@ class CommunityCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         title = validated_data.get("title")
         communityurl = validated_data.get("communityurl")
+        if " " in title:
+            raise serializers.ValidationError("커뮤니티 이름은 공백 없이 작성가능합니다.")
+        if " " in communityurl:
+            raise serializers.ValidationError("커뮤니티 영어 이름은 공백 없이 작성가능합니다.")
         if Community.objects.filter(title=title).exists():
             raise serializers.ValidationError("이미 존재하는 커뮤니티 이름입니다.")
         if not can_only_eng_and_int(communityurl):
-            raise serializers.ValidationError("커뮤니티url은 영어와 숫자로 5글자 이상인 경우에 작성가능합니다.")
+            raise serializers.ValidationError(
+                "커뮤니티 영어 이름은 영어와 숫자로 5글자 이상인 경우에 작성가능합니다."
+            )
 
         introduction = validated_data.get("introduction")
         image = validated_data.get("image")

@@ -2,6 +2,7 @@ from datetime import datetime
 from rest_framework import serializers
 from rest_framework.response import Response
 
+from community.models import Community
 from feed.models import (
     Category,
     Comment,
@@ -118,6 +119,7 @@ class FeedListSerializer(serializers.ModelSerializer):
     category = serializers.SerializerMethodField()
     comments_count = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
+    community_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Feed
@@ -134,6 +136,7 @@ class FeedListSerializer(serializers.ModelSerializer):
             "comments_count",
             "likes_count",
             "is_notification",
+            "community_name",
         ]
 
     def get_nickname(self, obj):
@@ -149,6 +152,11 @@ class FeedListSerializer(serializers.ModelSerializer):
 
     def get_likes_count(self, obj):
         return obj.likes.count()
+
+    def get_community_name(self, obj):
+        category = Category.objects.get(id=obj.category_id)
+        communityurl = Community.objects.get(title=category.community).communityurl
+        return communityurl
 
 
 class FeedCreateSerializer(serializers.ModelSerializer):
