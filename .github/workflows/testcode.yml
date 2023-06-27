@@ -37,7 +37,6 @@ jobs:
         POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
         POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
       run: |
-        source .env  # Load environment variables from .env file
         poetry run python manage.py makemigrations
         poetry run python manage.py migrate
         poetry run python manage.py test
