@@ -1,8 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
-from django.core.validators import RegexValidator, FileExtensionValidator
-from django.core.exceptions import ValidationError
-import uuid
+from django.core.validators import RegexValidator
 
 
 class MyUserManager(BaseUserManager):

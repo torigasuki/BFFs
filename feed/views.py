@@ -69,7 +69,11 @@ class CustomPagination(PageNumberPagination):
             else self.page.number + 2
         )
         response.data["last_page"] = self.page.paginator.num_pages
-        response.data["url"] = self.request.build_absolute_uri().split("?")[0]
+        backend_url = config("BACKEND_URL")
+        response.data["url"] = (
+            backend_url
+            + self.request.build_absolute_uri().split("?")[0].split("8000")[1]
+        )
         return response
 
 
@@ -211,7 +215,9 @@ class FeedCategoryListView(APIView):
         community_category = get_object_or_404(Community, communityurl=community_url)
         category_serializer = CommunityCategorySerializer(community_category)
         community_title = get_object_or_404(Community, communityurl=community_url)
-        community_serializer = CommunityCreateSerializer(community_title)
+        community_serializer = CommunityCreateSerializer(
+            community_title, context={"request": request}
+        )
         category_name = (
             Category.objects.filter(
                 community__communityurl=community_url, category_url=category_url
@@ -236,6 +242,8 @@ class FeedCategoryListView(APIView):
             paginated_feed_list = self.pagination_class.paginate_queryset(
                 feed_list, request
             )
+            notification_feed = feed_list.filter(is_notification=True)
+            notification_serializer = FeedListSerializer(notification_feed, many=True)
             serializer = FeedListSerializer(paginated_feed_list, many=True)
             pagination_serializer = self.pagination_class.get_paginated_response(
                 serializer.data
@@ -246,6 +254,7 @@ class FeedCategoryListView(APIView):
                     "category_name": category_name,
                     "categories": category_serializer.data,
                     "feed": pagination_serializer.data,
+                    "notification": notification_serializer.data,
                 },
                 status=status.HTTP_200_OK,
             )
@@ -330,7 +339,7 @@ class FeedCreateView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request, category_id):  # testcomu
+    def post(self, request, category_id):
         serializer = FeedCreateSerializer(data=request.data)
         category = get_object_or_404(Category, id=category_id)
         if serializer.is_valid():
@@ -373,21 +382,29 @@ class FeedNotificationView(APIView):
                 {"message": "커뮤니티 관리자 권한이 없습니다"}, status=status.HTTP_403_FORBIDDEN
             )
 
-        serializer = FeedNotificationSerializer(feed, data=request.data)
-        is_notificated = serializer.post_is_notification(feed, community, request)
-        serializer.is_valid(raise_exception=True)
-        if is_notificated:
-            serializer.save(is_notification=False)
+        notification_count = Feed.objects.filter(
+            is_notification=True, category_id=feed.category_id
+        ).count()
+        if notification_count > 4:
             return Response(
-                {"data": serializer.data, "message": "게시글 상태가 변경되었습니다"},
-                status=status.HTTP_200_OK,
+                {"message": "카테고리당 공지는 5개까지 가능합니다"}, status=status.HTTP_400_BAD_REQUEST
             )
-        else:  # False일 경우
-            serializer.save(is_notification=True)
-            return Response(
-                {"data": serializer.data, "message": "게시글 상태가 변경되었습니다"},
-                status=status.HTTP_200_OK,
-            )
+        else:
+            serializer = FeedNotificationSerializer(feed, data=request.data)
+            is_notificated = serializer.post_is_notification(feed, community, request)
+            serializer.is_valid(raise_exception=True)
+            if is_notificated:
+                serializer.save(is_notification=False)
+                return Response(
+                    {"data": serializer.data, "message": "게시글 상태가 변경되었습니다"},
+                    status=status.HTTP_200_OK,
+                )
+            else:  # False일 경우
+                serializer.save(is_notification=True)
+                return Response(
+                    {"data": serializer.data, "message": "게시글 상태가 변경되었습니다"},
+                    status=status.HTTP_200_OK,
+                )
 
 
 class FeedSearchView(ListAPIView):
