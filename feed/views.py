@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db import transaction
 from rest_framework.pagination import PageNumberPagination
-from community.models import Community, CommunityAdmin
+from community.models import Community, CommunityAdmin, ForbiddenWord
 from community.serializers import (
     CommunityUrlSerializer,
     CommunityAdminSerializer,
@@ -68,11 +68,11 @@ class CustomPagination(PageNumberPagination):
             if self.page.number >= self.page.paginator.num_pages - 1
             else self.page.number + 2
         )
-        response.data["last_page"] = self.page.paginator.num_pages
-        backend_url = config("BACKEND_URL")
+        url = config("BACKEND_URL")
         response.data["url"] = (
-            backend_url
-            + self.request.build_absolute_uri().split("?")[0].split("8000")[1]
+            url
+            + "/community"
+            + self.request.build_absolute_uri().split("?")[0].split("community")[1]
         )
         return response
 
@@ -342,6 +342,14 @@ class FeedCreateView(APIView):
     def post(self, request, category_id):
         serializer = FeedCreateSerializer(data=request.data)
         category = get_object_or_404(Category, id=category_id)
+        forbidden_word = ForbiddenWord.objects.filter(
+            community_id=category.community.id
+        ).values_list("word", flat=True)
+        for word in forbidden_word:
+            if word in request.data["content"] or word in request.data["title"]:
+                return Response(
+                    {"message": "금지어가 포함되어 있습니다"}, status=status.HTTP_400_BAD_REQUEST
+                )
         if serializer.is_valid():
             serializer.save(user=request.user, category=category)
             return Response({"message": "게시글이 작성되었습니다"}, status=status.HTTP_201_CREATED)
@@ -561,7 +569,7 @@ class GroupPurchaseJoinedUserView(APIView):
             serializer.save(user=request.user, grouppurchase_id=grouppurchase_id)
             # save한 후 join인원 체크 및 마감여부 확인
             if purchasefeed.check_end_person_limit_point(grouppurchase_id):
-                print("⭐️공구 마감⭐️")
+                pass
             return Response(
                 {
                     "message": "공구를 신청했습니다.",
