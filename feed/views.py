@@ -346,7 +346,7 @@ class FeedCreateView(APIView):
             community_id=category.community.id
         ).values_list("word", flat=True)
         for word in forbidden_word:
-            if word in request.data["content"]:
+            if word in request.data["content"] or word in request.data["title"]:
                 return Response(
                     {"message": "금지어가 포함되어 있습니다"}, status=status.HTTP_400_BAD_REQUEST
                 )
