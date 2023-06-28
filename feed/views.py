@@ -569,7 +569,6 @@ class GroupPurchaseJoinedUserView(APIView):
             serializer.save(user=request.user, grouppurchase_id=grouppurchase_id)
             # save한 후 join인원 체크 및 마감여부 확인
             if purchasefeed.check_end_person_limit_point(grouppurchase_id):
-                # print("⭐️공구 마감⭐️")
                 pass
             return Response(
                 {
