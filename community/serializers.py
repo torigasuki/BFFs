@@ -184,7 +184,6 @@ class CommunityUrlSerializer(serializers.ModelSerializer):
 
     def get_is_bookmarked(self, obj):
         request = self.context.get("request")
-        print(request)
         if request.user.is_authenticated:
             return obj.bookmarked.filter(id=request.user.id).exists()
         return False
