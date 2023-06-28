@@ -285,7 +285,9 @@ class ProfileDetailView(APIView):
         profile_serializer = UserProfileSerializer(profile)
         user = User.objects.get(id=user_id)
         bookmark = user.bookmark.all()
-        bookmark_serializer = CommunityCreateSerializer(bookmark, many=True)
+        bookmark_serializer = CommunityCreateSerializer(
+            bookmark, context={"request": request}, many=True
+        )
         community = CommunityAdmin.objects.filter(user_id=user_id)
         community_serializer = MyCommunitySerializer(community, many=True)
         feed = user.author.all()

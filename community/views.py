@@ -27,7 +27,9 @@ class CommunityView(APIView):
     def get(self, request):
         """커뮤니티 조회 및 북마크, 어드민 조회"""
         communities = Community.objects.all()
-        serializer = CommunitySerializer(communities, many=True)
+        serializer = CommunitySerializer(
+            communities, context={"request": request}, many=True
+        )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
@@ -53,7 +55,7 @@ class CommunityDetailView(APIView):
         # community_admin = community.comu.get(is_comuadmin=True).user
         # if community_admin == request.user:
         community = get_object_or_404(Community, communityurl=community_url)
-        serializer = CommunitySerializer(community)
+        serializer = CommunitySerializer(community, context={"request": request})
         return Response(
             {"data": serializer.data, "msg": "조회가 완료되었습니다."},
             status=status.HTTP_200_OK,
