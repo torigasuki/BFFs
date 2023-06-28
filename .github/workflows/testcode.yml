@@ -23,18 +23,15 @@ jobs:
         export PATH="$HOME/.poetry/bin:$PATH"
         poetry install --no-root
 
-    - name: Set up environment variables
-      run: |
-        echo "SECRET_KEY='${{ secrets.SECRET_KEY }}'" >> .env 
-        echo "EMAIL='${{ secrets.EMAIL }}'" >> .env
-        echo "EMAIL_PASSWORD='${{ secrets.EMAIL_PASSWORD }}'" >> .env
-        echo "BACKEND_URL='${{ secrets.BACKEND_URL }}'" >> .env
-        echo "FRONTEND_URL='${{ secrets.FRONTEND_URL }}'" >> .env
-        echo "OPENAI_API_KEY='${{ secrets.OPENAI_API_KEY }}'" >> .env
-
     - name: Run Tests with environment variables
+      env:
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}
+        EMAIL: ${{ secrets.EMAIL }}
+        EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+        BACKEND_URL: ${{ secrets.BACKEND_URL }}
+        FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
-        source .env  # Load environment variables from .env file
         poetry run python manage.py makemigrations
         poetry run python manage.py migrate
         poetry run python manage.py test

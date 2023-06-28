@@ -40,9 +40,9 @@ def send_text(request, user_input, ai_chat):
         model="gpt-3.5-turbo",
         max_tokens=300,
         messages=gpt_prompt,
-        temperature=0.5,
+        temperature=1,
         top_p=1,
-        presence_penalty=1,
+        presence_penalty=1.2,
     )
     # json response에서 필요한 부분만 불러옴
 

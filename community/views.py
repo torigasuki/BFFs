@@ -9,7 +9,7 @@ from django.shortcuts import redirect
 
 from user.models import User
 from user.serializers import SearchUserSerializer
-from feed.models import Category, Feed
+from feed.models import Feed
 from .models import Community, CommunityAdmin, ForbiddenWord
 from .serializers import (
     CommunitySerializer,
@@ -27,7 +27,9 @@ class CommunityView(APIView):
     def get(self, request):
         """커뮤니티 조회 및 북마크, 어드민 조회"""
         communities = Community.objects.all()
-        serializer = CommunitySerializer(communities, many=True)
+        serializer = CommunitySerializer(
+            communities, context={"request": request}, many=True
+        )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
@@ -38,13 +40,6 @@ class CommunityView(APIView):
         CommunityAdmin.objects.create(
             user=request.user, community=community, is_comuadmin=True
         )
-        base_categories = [
-            {"category_name": "얘기해요", "category_url": "talk"},
-            {"category_name": "모집해요", "category_url": "join"},
-            {"category_name": "공구해요", "category_url": "groupbuy"},
-        ]
-        for base_category in base_categories:
-            Category.objects.create(community=community, **base_category)
         return Response(
             {"data": serializer.data, "msg": "커뮤니티 생성 신청이 완료되었습니다."},
             status=status.HTTP_202_ACCEPTED,
@@ -60,7 +55,7 @@ class CommunityDetailView(APIView):
         # community_admin = community.comu.get(is_comuadmin=True).user
         # if community_admin == request.user:
         community = get_object_or_404(Community, communityurl=community_url)
-        serializer = CommunitySerializer(community)
+        serializer = CommunitySerializer(community, context={"request": request})
         return Response(
             {"data": serializer.data, "msg": "조회가 완료되었습니다."},
             status=status.HTTP_200_OK,

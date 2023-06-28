@@ -285,12 +285,11 @@ class ProfileView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        profile = Profile.objects.all()
+        profile = Profile.objects.all().order_by("-user__last_login")
         profile_serializer = UserProfileSerializer(profile, many=True)
         return Response(profile_serializer.data, status=status.HTTP_200_OK)
 
 
-# 프로필 id 받아오는 거로 수정할 예정!!!!!!!!!!!!!!!!!!
 class ProfileDetailView(APIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
@@ -299,7 +298,9 @@ class ProfileDetailView(APIView):
         profile_serializer = UserProfileSerializer(profile)
         user = User.objects.get(id=user_id)
         bookmark = user.bookmark.all()
-        bookmark_serializer = CommunityCreateSerializer(bookmark, many=True)
+        bookmark_serializer = CommunityCreateSerializer(
+            bookmark, context={"request": request}, many=True
+        )
         community = CommunityAdmin.objects.filter(user_id=user_id)
         community_serializer = MyCommunitySerializer(community, many=True)
         feed = user.author.all()

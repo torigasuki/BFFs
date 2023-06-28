@@ -12,6 +12,7 @@ from decouple import config
 from django.shortcuts import get_object_or_404
 
 
+
 class UserCreateSerializer(serializers.ModelSerializer):
     nickname = serializers.CharField()
     region = serializers.CharField()
@@ -40,7 +41,6 @@ class UserSerializer(serializers.ModelSerializer):
             "password",
         )
         extra_kwargs = {"password": {"write_only": True}}
-
 
 class UserProfileSerializer(serializers.ModelSerializer):
     profileimageurl = serializers.SerializerMethodField()
