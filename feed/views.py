@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db import transaction
 from rest_framework.pagination import PageNumberPagination
-from community.models import Community, CommunityAdmin
+from community.models import Community, CommunityAdmin, ForbiddenWord
 from community.serializers import (
     CommunityUrlSerializer,
     CommunityAdminSerializer,
@@ -342,6 +342,14 @@ class FeedCreateView(APIView):
     def post(self, request, category_id):
         serializer = FeedCreateSerializer(data=request.data)
         category = get_object_or_404(Category, id=category_id)
+        forbidden_word = ForbiddenWord.objects.filter(
+            community_id=category.community.id
+        ).values_list("word", flat=True)
+        for word in forbidden_word:
+            if word in request.data["content"]:
+                return Response(
+                    {"message": "금지어가 포함되어 있습니다"}, status=status.HTTP_400_BAD_REQUEST
+                )
         if serializer.is_valid():
             serializer.save(user=request.user, category=category)
             return Response({"message": "게시글이 작성되었습니다"}, status=status.HTTP_201_CREATED)
