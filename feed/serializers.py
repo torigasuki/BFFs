@@ -134,7 +134,6 @@ class FeedListSerializer(serializers.ModelSerializer):
             "nickname",
             "title",
             "content",
-            "image",
             "view_count",
             "created_at",
             "category",
@@ -172,8 +171,6 @@ class FeedCreateSerializer(serializers.ModelSerializer):
         fields = [
             "title",
             "content",
-            "image",
-            "video",
             "category",
         ]
         extra_kwargs = {
@@ -283,21 +280,39 @@ class GroupPurchaseListSerializer(serializers.ModelSerializer):
     """공구 게시글 list serializer"""
 
     grouppurchase_status = serializers.SerializerMethodField()
+    nickname = serializers.SerializerMethodField()
+    joined_user_count = serializers.SerializerMethodField()
+    comments_count = serializers.SerializerMethodField()
 
     class Meta:
         model = GroupPurchase
         fields = [
+            "id",
             "title",
             "product_name",
             "person_limit",
             "location",
             "user",
+            "nickname",
             "open_at",
             "close_at",
             "is_ended",
             "created_at",
             "grouppurchase_status",
+            "is_ended",
+            "view_count",
+            "comments_count",
+            "joined_user_count",
         ]
+
+    def get_nickname(self, obj):
+        return Profile.objects.get(user=obj.user).nickname
+
+    def get_joined_user_count(self, obj):
+        return obj.joined_user.count()
+
+    def get_comments_count(self, obj):
+        return obj.p_comment.count()
 
     def get_grouppurchase_status(self, obj):
         """공구 게시글 상태 check"""
@@ -332,6 +347,9 @@ class GroupPurchaseDetailSerializer(serializers.ModelSerializer):
     joined_user = serializers.StringRelatedField(many=True)
     joined_user_count = serializers.SerializerMethodField()
     comment_count = serializers.SerializerMethodField()
+    end_choice = serializers.SerializerMethodField()
+    category_name = serializers.SerializerMethodField()
+    category_url = serializers.SerializerMethodField()
 
     class Meta:
         model = GroupPurchase
@@ -370,6 +388,15 @@ class GroupPurchaseDetailSerializer(serializers.ModelSerializer):
 
     def get_comment_count(self, obj):
         return obj.p_comment.count()
+
+    def get_end_choice(self, obj):
+        return obj.get_end_option_display(obj)
+
+    def get_category_name(self, obj):
+        return obj.category.category_name
+
+    def get_category_url(self, obj):
+        return obj.category.category_url
 
 
 class GroupPurchaseCreateSerializer(serializers.ModelSerializer):
@@ -458,10 +485,6 @@ class FeedSearchSerializer(serializers.ModelSerializer):
     class Meta:
         model = Feed
         fields = "__all__"
-        exclude = [
-            "image",
-            "video",
-        ]
 
 
 class GroupPurchaseCommentSerializer(serializers.ModelSerializer):

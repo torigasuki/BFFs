@@ -507,8 +507,20 @@ class GroupPurchaseDetailView(APIView):
         response["comment"] = comment_serializer.data or "아직 댓글이 없습니다"
         return Response(response, status=status.HTTP_200_OK)
 
-    def put(self, request, grouppurchase_id):
+    def put(self, request, community_url, grouppurchase_id):
         purchasefeed = get_object_or_404(GroupPurchase, id=grouppurchase_id)
+        community = get_object_or_404(Community, communityurl=community_url)
+        category = get_object_or_404(
+            Category, community=community, category_url="groupbuy"
+        )
+        forbidden_word = ForbiddenWord.objects.filter(
+            community_id=category.community.id
+        ).values_list("word", flat=True)
+        for word in forbidden_word:
+            if word in request.data["content"] or word in request.data["title"]:
+                return Response(
+                    {"message": "금지어가 포함되어 있습니다"}, status=status.HTTP_400_BAD_REQUEST
+                )
         if purchasefeed.user != request.user:
             return Response(
                 {"error": "공구 게시글 작성자만 수정할 수 있습니다."}, status=status.HTTP_400_BAD_REQUEST
@@ -517,14 +529,16 @@ class GroupPurchaseDetailView(APIView):
             serializer = GroupPurchaseCreateSerializer(purchasefeed, data=request.data)
             if serializer.is_valid():
                 serializer.validate_datetime_update(request.data)
-                serializer.save(user=request.user)
+                serializer.save(
+                    community=community, category=category, user=request.user
+                )
                 return Response(
                     {"message": "공구 게시글이 수정되었습니다"}, status=status.HTTP_200_OK
                 )
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, grouppurchase_id):
+    def delete(self, request, community_url, grouppurchase_id):
         purchasefeed = get_object_or_404(GroupPurchase, id=grouppurchase_id)
         if purchasefeed.user != request.user:
             return Response(
