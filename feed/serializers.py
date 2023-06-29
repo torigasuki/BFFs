@@ -153,7 +153,7 @@ class FeedListSerializer(serializers.ModelSerializer):
 
     def get_comments_count(self, obj):
         comment = obj.comment.count()
-        cocomment = obj.comment.prefetch_related("cocomment").count()
+        cocomment = Cocomment.objects.filter(comment__feed=obj).count()
         return comment + cocomment
 
     def get_likes_count(self, obj):
@@ -223,7 +223,7 @@ class FeedDetailSerializer(serializers.ModelSerializer):
 
     def get_comments_count(self, obj):
         comment = obj.comment.count()
-        cocomment = obj.comment.prefetch_related("cocomment").count()
+        cocomment = Cocomment.objects.filter(comment__feed=obj).count()
         return comment + cocomment
 
 
