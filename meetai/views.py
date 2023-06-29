@@ -42,7 +42,8 @@ def send_text(request, user_input, ai_chat):
         messages=gpt_prompt,
         temperature=0.8,
         top_p=1,
-        presence_penalty=1,
+        presence_penalty=1.8,
+        frequency_penalty=0.2,
     )
     # json response에서 필요한 부분만 불러옴
 
