@@ -12,6 +12,7 @@ from feed.models import (
     GroupPurchaseComment,
 )
 from user.models import Profile
+from django.db.models import Sum
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -309,7 +310,7 @@ class GroupPurchaseListSerializer(serializers.ModelSerializer):
         return Profile.objects.get(user=obj.user).nickname
 
     def get_joined_user_count(self, obj):
-        return obj.joined_user.count()
+        return obj.grouppurchase.count()
 
     def get_comments_count(self, obj):
         return obj.p_comment.count()
@@ -344,8 +345,9 @@ class GroupPurchaseDetailSerializer(serializers.ModelSerializer):
     """공구 게시글 상세 serializer"""
 
     grouppurchase_status = serializers.SerializerMethodField()
-    joined_user = serializers.StringRelatedField(many=True)
+    purchase_quantity = serializers.SerializerMethodField()
     joined_user_count = serializers.SerializerMethodField()
+    joined_users = serializers.SerializerMethodField()
     comment_count = serializers.SerializerMethodField()
     end_choice = serializers.SerializerMethodField()
     category_name = serializers.SerializerMethodField()
@@ -383,8 +385,21 @@ class GroupPurchaseDetailSerializer(serializers.ModelSerializer):
         real_join = JoinedUser.objects.filter(user=obj.joined_user, is_deleted=False)
         return real_join
 
+    def get_purchase_quantity(self, obj):
+        return (
+            JoinedUser.objects.filter(grouppurchase_id=obj.id)
+            .aggregate(Sum("product_quantity"))
+            .get("product_quantity__sum")
+            or 0
+        )
+
     def get_joined_user_count(self, obj):
-        return obj.joined_user.count()
+        return obj.grouppurchase.count()
+
+    def get_joined_users(self, obj):
+        user = JoinedUser.objects.filter(grouppurchase_id=obj.id)
+        serializer = JoinedUserListSerializer(user, many=True)
+        return serializer.data
 
     def get_comment_count(self, obj):
         return obj.p_comment.count()
@@ -489,6 +504,35 @@ class JoinedUserSerializer(serializers.ModelSerializer):
         }
 
 
+class JoinedUserListSerializer(serializers.ModelSerializer):
+    """공구 참여유저 serializer"""
+
+    nickname = serializers.SerializerMethodField()
+    region = serializers.SerializerMethodField()
+    profileimage = serializers.SerializerMethodField()
+
+    class Meta:
+        model = JoinedUser
+        fields = [
+            "id",
+            "user",
+            "product_quantity",
+            "created_at",
+            "nickname",
+            "region",
+            "profileimage",
+        ]
+
+    def get_nickname(self, obj):
+        return obj.user.profile.nickname
+
+    def get_region(self, obj):
+        return obj.user.profile.region
+
+    def get_profileimage(self, obj):
+        return f"{obj.user.profile.profileimage}"
+
+
 class FeedSearchSerializer(serializers.ModelSerializer):
     """피드 검색 serializer"""
 
@@ -525,3 +569,14 @@ class GroupPurchaseCommentSerializer(serializers.ModelSerializer):
 
     def get_nickname(self, obj):
         return Profile.objects.get(user=obj.user).nickname
+
+
+class ProfileGrouppurchaseSerializer(serializers.ModelSerializer):
+    community_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = GroupPurchase
+        fields = ["id", "title", "product_name", "open_at", "close_at", "community_url"]
+
+    def get_community_url(self, obj):
+        return obj.community.communityurl

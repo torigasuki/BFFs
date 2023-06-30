@@ -142,7 +142,7 @@ class GroupPurchase(models.Model, HitCountMixin):
     end_option = models.CharField(choices=END_CHOICES, max_length=20)
 
     community = models.ForeignKey(
-        Community, on_delete=models.CASCADE, related_name="community_purchases"
+        Community, on_delete=models.CASCADE, related_name="community"
     )
     category = models.ForeignKey(
         "feed.Category",
@@ -171,10 +171,10 @@ class GroupPurchase(models.Model, HitCountMixin):
     def check_end_person_limit_point(self, grouppurchase_id):
         """공구 제한 인원이 채워질 경우 공구 종료"""
         purchasefeed = GroupPurchase.objects.get(id=grouppurchase_id)
-        if purchasefeed.joined_user is None:
+        if purchasefeed.grouppurchase is None:
             return False
         else:
-            joined = purchasefeed.joined_user.count()
+            joined = purchasefeed.grouppurchase.count()
             person_count = self.person_limit - joined
             if person_count <= 0:
                 self.is_ended = True
@@ -207,9 +207,9 @@ class GroupPurchaseComment(CommentBaseModel):
 class JoinedUser(models.Model):
     """공구에 참여한 유저 모델"""
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="joined_user")
     grouppurchase = models.ForeignKey(
-        GroupPurchase, on_delete=models.CASCADE, related_name="joined_user"
+        GroupPurchase, on_delete=models.CASCADE, related_name="grouppurchase"
     )
     product_quantity = models.PositiveIntegerField()
     created_at = models.DateTimeField(default=timezone.now)

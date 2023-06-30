@@ -11,6 +11,7 @@ from community.serializers import (
     CommunityCreateSerializer,
     CommunityCategorySerializer,
 )
+from django.db.models import Sum
 from decouple import config
 from collections import OrderedDict
 from feed.models import (
@@ -466,7 +467,8 @@ class GroupPurchaseCreateView(APIView):
         for word in forbidden_word:
             if word in request.data["content"] or word in request.data["title"]:
                 return Response(
-                    {"message": "금지어가 포함되어 있습니다"}, status=status.HTTP_400_BAD_REQUEST
+                    {"message": f"금지어 {word}가 포함되어 있습니다"},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
         if serializer.is_valid():
             serializer.validate_datetime(request.data)
@@ -562,7 +564,7 @@ class GroupPurchaseListView(APIView):
     """공구 list view"""
 
     def get(self, request, community_url):
-        community = Community.objects.get(communityurl=community_url)
+        community = get_object_or_404(Community, communityurl=community_url)
         feed_list = (
             GroupPurchase.objects.filter(community_id=community.id)
             .order_by("-created_at")
@@ -588,13 +590,21 @@ class GroupPurchaseJoinedUserView(APIView):
     @transaction.atomic
     def post(self, request, grouppurchase_id):
         purchasefeed = get_object_or_404(GroupPurchase, id=grouppurchase_id)
+        purchase_quantity = (
+            JoinedUser.objects.exclude(user=request.user)
+            .filter(grouppurchase_id=grouppurchase_id)
+            .aggregate(Sum("product_quantity"))
+            .get("product_quantity__sum")
+            or 0
+        )
+        remain_quantity = purchasefeed.product_number - purchase_quantity
         join_purchase = JoinedUser.objects.filter(
             user_id=request.user.id, grouppurchase_id=grouppurchase_id
         ).last()
         quantity = int(request.data.__getitem__("product_quantity"))
         if not request.user.profile.region:
             return Response(
-                {"error": "유저 프로필을 업데이트 해주세요! 상세 정보가 없으면 공구를 진행할 수 없습니다."},
+                {"message": "유저 프로필을 업데이트 해주세요! 상세 정보가 없으면 공구를 진행할 수 없습니다."},
                 status=status.HTTP_403_FORBIDDEN,
             )
         if purchasefeed.check_end_person_limit_point(grouppurchase_id):
@@ -631,11 +641,13 @@ class GroupPurchaseJoinedUserView(APIView):
         serializer = JoinedUserSerializer(joined_user, data=request.data)
         if quantity < 0 or quantity == joined_user.product_quantity:
             return Response(
-                {"error": "수량을 다시 확인해주세요"}, status=status.HTTP_400_BAD_REQUEST
+                {"message": "수량을 다시 확인해주세요"}, status=status.HTTP_400_BAD_REQUEST
             )
-        # 수량 제한을 만들경우 필요함
-        # if quantity > 남은수량:
-        #     return Response({"error":"신청 수량이 남은 수량보다 많습니다."}, status=status.HTTP_406_NOT_ACCEPTABLE)
+        if quantity > remain_quantity:
+            return Response(
+                {"message": "신청 수량이 남은 수량보다 많습니다."},
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
         serializer.is_valid(raise_exception=True)
         if joined_user.is_deleted is True:
             serializer.save(is_deleted=False)
