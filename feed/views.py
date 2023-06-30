@@ -38,6 +38,7 @@ from feed.serializers import (
     JoinedUserCreateSerializer,
     JoinedUserSerializer,
     GroupPurchaseCommentSerializer,
+    GroupPurchaseSelfEndSerializer,
 )
 import math
 
@@ -673,7 +674,7 @@ class GroupPurchaseSelfEndView(APIView):
                 {"message": "이미 종료된 공구 게시글입니다"},
                 status=status.HTTP_405_METHOD_NOT_ALLOWED,
             )
-        serializer = GroupPurchaseDetailSerializer(purchase, data=request.data)
+        serializer = GroupPurchaseSelfEndSerializer(purchase, data=request.data)
         if serializer.is_valid():
             serializer.save(is_ended=True)
             return Response(

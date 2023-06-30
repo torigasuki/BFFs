@@ -451,6 +451,16 @@ class GroupPurchaseCreateSerializer(serializers.ModelSerializer):
         return data
 
 
+class GroupPurchaseSelfEndSerializer(serializers.ModelSerializer):
+    """공구 종료 serializer"""
+
+    class Meta:
+        model = GroupPurchase
+        fields = [
+            "is_ended",
+        ]
+
+
 class JoinedUserCreateSerializer(serializers.ModelSerializer):
     """공구 참여유저 생성 serializer"""
 
