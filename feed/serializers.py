@@ -134,7 +134,6 @@ class FeedListSerializer(serializers.ModelSerializer):
             "nickname",
             "title",
             "content",
-            "image",
             "view_count",
             "created_at",
             "category",
@@ -172,8 +171,6 @@ class FeedCreateSerializer(serializers.ModelSerializer):
         fields = [
             "title",
             "content",
-            "image",
-            "video",
             "category",
         ]
         extra_kwargs = {
@@ -458,10 +455,6 @@ class FeedSearchSerializer(serializers.ModelSerializer):
     class Meta:
         model = Feed
         fields = "__all__"
-        exclude = [
-            "image",
-            "video",
-        ]
 
 
 class GroupPurchaseCommentSerializer(serializers.ModelSerializer):
