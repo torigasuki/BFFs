@@ -21,6 +21,7 @@ from rest_framework_simplejwt.views import TokenViewBase
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from .models import User, Profile, GuestBook, Verify
+from feed.models import GroupPurchase
 from .serializers import (
     UserCreateSerializer,
     UserDelSerializer,
@@ -30,7 +31,7 @@ from .serializers import (
     GuestBookCreateSerializer,
     SearchUserSerializer,
 )
-from feed.serializers import ProfileFeedSerializer
+from feed.serializers import ProfileFeedSerializer, ProfileGrouppurchaseSerializer
 from community.models import Community, CommunityAdmin
 from community.serializers import CommunityCreateSerializer, MyCommunitySerializer
 from .validators import email_validator
@@ -309,6 +310,18 @@ class ProfileDetailView(APIView):
         community_serializer = MyCommunitySerializer(community, many=True)
         feed = user.author.all()
         feed_serializer = ProfileFeedSerializer(feed, many=True)
+        joined = (
+            user.joined_user.filter(user_id=user_id)
+            .exclude(is_deleted=True)
+            .prefetch_related("grouppurchase")
+            .all()
+        )
+        joined_grouppurchase = GroupPurchase.objects.filter(id__in=joined).order_by(
+            "-created_at"
+        )
+        joined_grouppurchase_serializer = ProfileGrouppurchaseSerializer(
+            joined_grouppurchase, many=True
+        )
         guestbook = GuestBook.objects.filter(profile_id=user_id).order_by("-created_at")
         guestbook_serializer = GuestBookSerializer(guestbook, many=True)
         return Response(
@@ -317,6 +330,7 @@ class ProfileDetailView(APIView):
                 "bookmark": bookmark_serializer.data,
                 "community": community_serializer.data,
                 "feed": feed_serializer.data,
+                "joined_grouppurchase": joined_grouppurchase_serializer.data,
                 "guestbook": guestbook_serializer.data,
             },
             status=status.HTTP_200_OK,
