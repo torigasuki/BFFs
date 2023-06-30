@@ -105,6 +105,16 @@ class CommunityCreateSerializer(serializers.ModelSerializer):
             "is_approval",
             "is_bookmarked",
         ]
+        extra_kwargs = {
+            "title": {
+                "error_messages": {
+                    "blank": "커뮤니티 이름을 입력해주세요.",
+                    "min_length": "커뮤니티 이름은 2글자 이상 작성해주세요.",
+                },
+            },
+            "communityurl": {"error_messages": {"blank": "커뮤니티 영어 이름을 입력해주세요."}},
+            "introduction": {"error_messages": {"blank": "커뮤니티 소개를 입력해주세요."}},
+        }
 
     def create(self, validated_data):
         title = validated_data.get("title")
