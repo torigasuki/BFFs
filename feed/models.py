@@ -171,10 +171,10 @@ class GroupPurchase(models.Model, HitCountMixin):
     def check_end_person_limit_point(self, grouppurchase_id):
         """공구 제한 인원이 채워질 경우 공구 종료"""
         purchasefeed = GroupPurchase.objects.get(id=grouppurchase_id)
-        if purchasefeed.joined_user is None:
+        if purchasefeed.grouppurchase is None:
             return False
         else:
-            joined = purchasefeed.joined_user.count()
+            joined = purchasefeed.grouppurchase.count()
             person_count = self.person_limit - joined
             if person_count <= 0:
                 self.is_ended = True
