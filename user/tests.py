@@ -184,7 +184,7 @@ class verifyMailTest(APITestCase):
         verify = self.verify_data
         response = self.client.post(self.path, verify)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["msg"], "메일인증이 완료되었습니다")
+        self.assertEqual(response.data["message"], "메일인증이 완료되었습니다")
 
     def test_verifyMail_none(self):
         verify = {"email": "", "code": ""}
@@ -234,7 +234,7 @@ class signupTest(APITestCase):
     def test_signup(self):
         response = self.client.post(self.path, self.test_user)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data["msg"], "회원가입이 완료되었습니다.")
+        self.assertEqual(response.data["message"], "회원가입이 완료되었습니다.")
 
     def test_signup_none(self):
         test_user = {"email": "", "password": "", "name": ""}

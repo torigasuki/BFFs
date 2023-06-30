@@ -24,6 +24,6 @@ class MyPurchaseCronJob(CronJobBase):
         now = timezone.now()
         code = "feed.my_purchase_job"
 
-        end_grouppuchase = GroupPurchase.objects.filter(close_at__gte=now).update(
+        end_grouppuchase = GroupPurchase.objects.filter(close_at__lte=now).update(
             is_ended=True
         )

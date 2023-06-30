@@ -25,8 +25,6 @@ class Feed(models.Model, HitCountMixin):
     )
     title = models.CharField(max_length=50)
     content = models.TextField(blank=True)
-    image = models.ImageField(upload_to="media/photo/%Y/%m/%d", null=True, blank=True)
-    video = models.FileField(upload_to="media/video/%Y/%m/%d", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     likes = models.ManyToManyField(
@@ -117,11 +115,11 @@ class GroupPurchase(models.Model, HitCountMixin):
 
     title = models.CharField(max_length=50)
     content = models.TextField(blank=True)
-    product_name = models.CharField(max_length=50)
+    product_name = models.CharField(max_length=20)
     product_number = models.PositiveIntegerField(default=0, help_text="구매 예상 수량")
     product_price = models.PositiveIntegerField(help_text="전체 금액")
     # product_division_price = models.PositiveIntegerField(help_text="전체 금액/구매 인원수")
-    link = models.URLField(max_length=300, null=True, help_text="어떤 물건인지 링크 넣어주기")
+    link = models.URLField(max_length=500, null=True, help_text="어떤 물건인지 링크 넣어주기")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_ended = models.BooleanField(default=False, help_text="공구 끝내기")
@@ -136,10 +134,10 @@ class GroupPurchase(models.Model, HitCountMixin):
     open_at = models.DateTimeField(null=False, help_text="모집 시작")
     close_at = models.DateTimeField(null=True, help_text="모집 종료")
     END_CHOICES = (
-        ("공구를 계속 진행할 거예요", "continue"),
-        ("공구를 진행하지 않을 거예요", "quit"),
-        ("신청한 사람과 논의 후 결정할래요", "discuss"),
-        ("종료 후 고민해보고 결정할래요", "maybe"),
+        ("continue", "공구를 계속 진행할 거예요"),
+        ("quit", "공구를 진행하지 않을 거예요"),
+        ("discuss", "신청한 사람과 논의 후 결정할래요"),
+        ("maybe", "종료 후 고민해보고 결정할래요"),
     )
     end_option = models.CharField(choices=END_CHOICES, max_length=20)
 
@@ -151,11 +149,13 @@ class GroupPurchase(models.Model, HitCountMixin):
         on_delete=models.CASCADE,
         related_name="purchase_category",
         blank=False,
-        default=3,
     )
 
     # 조회수 코드
     view_count = models.PositiveIntegerField(default=0)
+
+    def get_end_option_display(self, obj):
+        return dict(self.END_CHOICES).get(self.end_option)
 
     def click(self):
         self.view_count += 1
@@ -220,7 +220,7 @@ class JoinedUser(models.Model):
         verbose_name_plural = "공구지원자 현황(JoinedUser)"
 
     def __str__(self):
-        return f"실명 :{self.user.name} ({self.user.profile.region})"
+        return f"유저 : {self.user.profile.nickname} ({self.user.profile.region}) 수량 :{self.product_quantity}"
 
 
 def change_image_name(instance, filename):

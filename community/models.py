@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.core.files.storage import default_storage
+from django.core.validators import MinLengthValidator
 from user.models import User
 
 
@@ -13,7 +14,9 @@ class Community(models.Model):
         if self.size > 5 * 1024 * 1024:
             raise ValueError("이미지의 크기는 5MB 이하여야 합니다.")
 
-    title = models.CharField(max_length=20, unique=True)
+    title = models.CharField(
+        max_length=20, unique=True, validators=[MinLengthValidator(2)]
+    )
     communityurl = models.CharField(max_length=20, unique=True)
     introduction = models.TextField()
     image = models.ImageField(

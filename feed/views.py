@@ -38,6 +38,7 @@ from feed.serializers import (
     JoinedUserCreateSerializer,
     JoinedUserSerializer,
     GroupPurchaseCommentSerializer,
+    GroupPurchaseSelfEndSerializer,
 )
 import math
 
@@ -316,6 +317,15 @@ class FeedDetailView(APIView):
                 {"error": "게시글 작성자만 수정할 수 있습니다."}, status=status.HTTP_403_FORBIDDEN
             )
         else:
+            forbidden_word = ForbiddenWord.objects.filter(
+                community_id=feed.category.community.id
+            ).values_list("word", flat=True)
+            for word in forbidden_word:
+                if word in request.data["content"] or word in request.data["title"]:
+                    return Response(
+                        {"message": f"금지어 '{word}' 가 포함되어 있습니다"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
             serializer = FeedCreateSerializer(feed, data=request.data)
             if serializer.is_valid():
                 serializer.save(user=request.user)
@@ -348,7 +358,8 @@ class FeedCreateView(APIView):
         for word in forbidden_word:
             if word in request.data["content"] or word in request.data["title"]:
                 return Response(
-                    {"message": "금지어가 포함되어 있습니다"}, status=status.HTTP_400_BAD_REQUEST
+                    {"message": f"금지어 '{word}' 가 포함되어 있습니다"},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
         if serializer.is_valid():
             serializer.save(user=request.user, category=category)
@@ -404,13 +415,13 @@ class FeedNotificationView(APIView):
             if is_notificated:
                 serializer.save(is_notification=False)
                 return Response(
-                    {"data": serializer.data, "message": "게시글 상태가 변경되었습니다"},
+                    {"data": serializer.data, "message": "공지가 취소되었습니다"},
                     status=status.HTTP_200_OK,
                 )
             else:  # False일 경우
                 serializer.save(is_notification=True)
                 return Response(
-                    {"data": serializer.data, "message": "게시글 상태가 변경되었습니다"},
+                    {"data": serializer.data, "message": "공지가 등록되었습니다"},
                     status=status.HTTP_200_OK,
                 )
 
@@ -432,16 +443,39 @@ class GroupPurchaseCreateView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    def get(self, request, community_url):
+        community = get_object_or_404(Community, communityurl=community_url)
+        category = get_object_or_404(
+            Category, community=community, category_url="groupbuy"
+        )
+        grouppruchase = GroupPurchase.objects.filter(
+            community_id=community.id, category_id=category.id
+        )
+        serializer = GroupPurchaseCreateSerializer(grouppruchase, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     def post(self, request, community_url):
         serializer = GroupPurchaseCreateSerializer(data=request.data)
-        community = Community.objects.get(communityurl=community_url)
+        community = get_object_or_404(Community, communityurl=community_url)
+        category = get_object_or_404(
+            Category, community=community, category_url="groupbuy"
+        )
+        forbidden_word = ForbiddenWord.objects.filter(
+            community_id=category.community.id
+        ).values_list("word", flat=True)
+        for word in forbidden_word:
+            if word in request.data["content"] or word in request.data["title"]:
+                return Response(
+                    {"message": "금지어가 포함되어 있습니다"}, status=status.HTTP_400_BAD_REQUEST
+                )
         if serializer.is_valid():
             serializer.validate_datetime(request.data)
-            serializer.save(community=community, user=request.user)
+            serializer.save(community=community, category=category, user=request.user)
             return Response(
                 {"message": "공동구매 게시글이 작성되었습니다"}, status=status.HTTP_201_CREATED
             )
         else:
+            print(serializer.errors)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -474,8 +508,20 @@ class GroupPurchaseDetailView(APIView):
         response["comment"] = comment_serializer.data or "아직 댓글이 없습니다"
         return Response(response, status=status.HTTP_200_OK)
 
-    def put(self, request, grouppurchase_id):
+    def put(self, request, community_url, grouppurchase_id):
         purchasefeed = get_object_or_404(GroupPurchase, id=grouppurchase_id)
+        community = get_object_or_404(Community, communityurl=community_url)
+        category = get_object_or_404(
+            Category, community=community, category_url="groupbuy"
+        )
+        forbidden_word = ForbiddenWord.objects.filter(
+            community_id=category.community.id
+        ).values_list("word", flat=True)
+        for word in forbidden_word:
+            if word in request.data["content"] or word in request.data["title"]:
+                return Response(
+                    {"message": "금지어가 포함되어 있습니다"}, status=status.HTTP_400_BAD_REQUEST
+                )
         if purchasefeed.user != request.user:
             return Response(
                 {"error": "공구 게시글 작성자만 수정할 수 있습니다."}, status=status.HTTP_400_BAD_REQUEST
@@ -484,14 +530,16 @@ class GroupPurchaseDetailView(APIView):
             serializer = GroupPurchaseCreateSerializer(purchasefeed, data=request.data)
             if serializer.is_valid():
                 serializer.validate_datetime_update(request.data)
-                serializer.save(user=request.user)
+                serializer.save(
+                    community=community, category=category, user=request.user
+                )
                 return Response(
                     {"message": "공구 게시글이 수정되었습니다"}, status=status.HTTP_200_OK
                 )
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, grouppurchase_id):
+    def delete(self, request, community_url, grouppurchase_id):
         purchasefeed = get_object_or_404(GroupPurchase, id=grouppurchase_id)
         if purchasefeed.user != request.user:
             return Response(
@@ -626,7 +674,7 @@ class GroupPurchaseSelfEndView(APIView):
                 {"message": "이미 종료된 공구 게시글입니다"},
                 status=status.HTTP_405_METHOD_NOT_ALLOWED,
             )
-        serializer = GroupPurchaseDetailSerializer(purchase, data=request.data)
+        serializer = GroupPurchaseSelfEndSerializer(purchase, data=request.data)
         if serializer.is_valid():
             serializer.save(is_ended=True)
             return Response(
