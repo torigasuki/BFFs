@@ -492,3 +492,14 @@ class GroupPurchaseCommentSerializer(serializers.ModelSerializer):
 
     def get_nickname(self, obj):
         return Profile.objects.get(user=obj.user).nickname
+
+
+class ProfileGrouppurchaseSerializer(serializers.ModelSerializer):
+    community_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = GroupPurchase
+        fields = ["id", "title", "product_name", "open_at", "close_at", "community_url"]
+
+    def get_community_url(self, obj):
+        return obj.community.communityurl

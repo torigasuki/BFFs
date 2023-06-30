@@ -144,7 +144,7 @@ class GroupPurchase(models.Model, HitCountMixin):
     end_option = models.CharField(choices=END_CHOICES, max_length=20)
 
     community = models.ForeignKey(
-        Community, on_delete=models.CASCADE, related_name="community_purchases"
+        Community, on_delete=models.CASCADE, related_name="community"
     )
     category = models.ForeignKey(
         "feed.Category",
@@ -207,9 +207,9 @@ class GroupPurchaseComment(CommentBaseModel):
 class JoinedUser(models.Model):
     """공구에 참여한 유저 모델"""
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="joined_user")
     grouppurchase = models.ForeignKey(
-        GroupPurchase, on_delete=models.CASCADE, related_name="joined_user"
+        GroupPurchase, on_delete=models.CASCADE, related_name="grouppurchase"
     )
     product_quantity = models.PositiveIntegerField()
     created_at = models.DateTimeField(default=timezone.now)
