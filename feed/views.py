@@ -323,7 +323,7 @@ class FeedDetailView(APIView):
                 if word in request.data["content"] or word in request.data["title"]:
                     return Response(
                         {"message": f"금지어 '{word}' 가 포함되어 있습니다"},
-                        status=status.HTTP_405_METHOD_NOT_ALLOWED,
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
             serializer = FeedCreateSerializer(feed, data=request.data)
             if serializer.is_valid():
@@ -358,7 +358,7 @@ class FeedCreateView(APIView):
             if word in request.data["content"] or word in request.data["title"]:
                 return Response(
                     {"message": f"금지어 '{word}' 가 포함되어 있습니다"},
-                    status=status.HTTP_405_METHOD_NOT_ALLOWED,
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
         if serializer.is_valid():
             serializer.save(user=request.user, category=category)
