@@ -707,13 +707,13 @@ class GroupPurchaseViewTest(APITestCase):
             "id": 3,
             "community": cls.community,
             "category_name": "공구해요",
-            "category_url": "purchase",
+            "category_url": "groupbuy",
         }
         cls.category = Category.objects.create(
             id=3,
             community=cls.community,
             category_name="공구해요",
-            category_url="purchase",
+            category_url="groupbuy",
         )
 
         cls.grouppurchase = GroupPurchase.objects.create(
@@ -725,13 +725,13 @@ class GroupPurchaseViewTest(APITestCase):
             product_name="상품명",
             product_number="2",
             product_price="10000",
-            link="null",
+            link="https://diane073.tistory.com/",
             person_limit="2",
             location="서울시 송파구, 석촌역 8번출구 앞",
             meeting_at="2023-06-21T12:00:00",
             open_at="2023-06-20T18:00:00",
             close_at="2023-06-21T09:00:00",
-            end_option="공구를 계속 진행할 거예요",
+            end_option="quit",
         )
         cls.grouppurchase_limit_10 = GroupPurchase.objects.create(
             community=cls.community,
@@ -742,13 +742,13 @@ class GroupPurchaseViewTest(APITestCase):
             product_name="상품명",
             product_number="2",
             product_price="10000",
-            link="null",
+            link="https://diane073.tistory.com/",
             person_limit="10",
             location="서울시 송파구, 석촌역 8번출구 앞",
             meeting_at="2023-06-21T12:00:00",
             open_at="2023-06-20T18:00:00",
             close_at="2023-06-21T09:00:00",
-            end_option="공구를 계속 진행할 거예요",
+            end_option="quit",
         )
         cls.grouppurchase_limit_1 = GroupPurchase.objects.create(
             community=cls.community,
@@ -759,13 +759,13 @@ class GroupPurchaseViewTest(APITestCase):
             product_name="상품명",
             product_number="2",
             product_price="10000",
-            link="null",
+            link="https://diane073.tistory.com/",
             person_limit="1",
             location="서울시 송파구, 석촌역 8번출구 앞",
             meeting_at="2023-06-21T12:00:00",
             open_at="2023-06-20T18:00:00",
             close_at="2023-06-21T09:00:00",
-            end_option="공구를 계속 진행할 거예요",
+            end_option="quit",
         )
         cls.grouppurchase_is_ended = GroupPurchase.objects.create(
             community=cls.community,
@@ -776,13 +776,13 @@ class GroupPurchaseViewTest(APITestCase):
             product_name="상품명",
             product_number="10",
             product_price="10000",
-            link="null",
+            link="https://diane073.tistory.com/",
             person_limit="2",
             location="서울시 송파구, 석촌역 8번출구 앞",
             meeting_at="2023-06-09T12:00:00",
             open_at="2023-06-10T18:00:00",
             close_at="2023-06-11T09:00:00",
-            end_option="공구를 계속 진행할 거예요",
+            end_option="quit",
             is_ended="True",
         )
         cls.joined_user = JoinedUser.objects.create(
@@ -803,10 +803,12 @@ class GroupPurchaseViewTest(APITestCase):
             "grouppurchase_create_view", args=[cls.community.communityurl]
         )
         cls.path2 = reverse(
-            "grouppurchase_put_delete_view", args=[cls.grouppurchase.id]
+            "grouppurchase_put_delete_view",
+            args=[cls.community.communityurl, cls.grouppurchase.id],
         )
         cls.path3 = reverse(
-            "grouppurchase_put_delete_view", args=[cls.grouppurchase_is_ended.id]
+            "grouppurchase_put_delete_view",
+            args=[cls.community.communityurl, cls.grouppurchase_is_ended.id],
         )
         cls.path4 = reverse(
             "grouppurchase_list_view", args=[cls.community.communityurl]
@@ -842,13 +844,13 @@ class GroupPurchaseViewTest(APITestCase):
             "product_name": "상품명",
             "product_number": "10",
             "product_price": "10000",
-            "link": "null",
+            "link": "https://diane073.tistory.com/",
             "person_limit": "2",
             "location": "서울시 송파구, 석촌역 8번출구 앞",
             "meeting_at": "2099-07-31T12:00:00",
             "open_at": "2025-07-20T18:00:00",
             "close_at": "2099-07-23T09:00:00",
-            "end_option": "공구를 계속 진행할 거예요",
+            "end_option": "quit",
         }
         self.grouppurchase_data_open_fail = {
             "community": self.community.id,
@@ -859,13 +861,13 @@ class GroupPurchaseViewTest(APITestCase):
             "product_name": "상품명",
             "product_number": "10",
             "product_price": "10000",
-            "link": "null",
+            "link": "https://diane073.tistory.com/",
             "person_limit": "2",
             "location": "서울시 송파구, 석촌역 8번출구 앞",
             "meeting_at": "9999-06-30T12:00:00",
             "open_at": "2023-06-01T18:00:00",
             "close_at": "9999-06-25T09:00:00",
-            "end_option": "공구를 계속 진행할 거예요",
+            "end_option": "quit",
         }
         self.grouppurchase_data_close_fail = {
             "community": self.community.id,
@@ -876,13 +878,13 @@ class GroupPurchaseViewTest(APITestCase):
             "product_name": "상품명",
             "product_number": "10",
             "product_price": "10000",
-            "link": "null",
+            "link": "https://diane073.tistory.com/",
             "person_limit": "5",
             "location": "서울시 송파구, 석촌역 8번출구 앞",
             "meeting_at": "9999-06-30T12:00:00",
             "open_at": "9999-06-25T18:00:00",
             "close_at": "2023-06-10T09:00:00",
-            "end_option": "공구를 계속 진행할 거예요",
+            "end_option": "quit",
         }
         self.grouppurchase_data_meeting_fail = {
             "community": self.community.id,
@@ -893,13 +895,77 @@ class GroupPurchaseViewTest(APITestCase):
             "product_name": "상품명",
             "product_number": "10",
             "product_price": "10000",
-            "link": "null",
+            "link": "https://diane073.tistory.com/",
             "person_limit": "2",
             "location": "서울시 송파구, 석촌역 8번출구 앞",
             "meeting_at": "2023-06-10T12:00:00",
             "open_at": "9999-06-25T18:00:00",
             "close_at": "9999-06-30T09:00:00",
-            "end_option": "공구를 계속 진행할 거예요",
+            "end_option": "quit",
+        }
+        self.grouppurchase_data_not_close_open_fail = {
+            "community": self.community.id,
+            "category": self.category.id,
+            "user": self.user.id,
+            "title": "purchase create feed",
+            "content": "purchase test feed create",
+            "product_name": "상품명",
+            "product_number": "10",
+            "product_price": "10000",
+            "link": "https://diane073.tistory.com/",
+            "person_limit": "2",
+            "location": "서울시 송파구, 석촌역 8번출구 앞",
+            "meeting_at": "9999-06-30T12:00:00",
+            "open_at": "2023-06-01T18:00:00",
+            "end_option": "quit",
+        }
+        self.grouppurchase_data_not_close_meeting_fail = {
+            "community": self.community.id,
+            "category": self.category.id,
+            "user": self.user.id,
+            "title": "purchase create feed",
+            "content": "purchase test feed create",
+            "product_name": "상품명",
+            "product_number": "10",
+            "product_price": "10000",
+            "link": "https://diane073.tistory.com/",
+            "person_limit": "2",
+            "location": "서울시 송파구, 석촌역 8번출구 앞",
+            "meeting_at": "2023-06-10T12:00:00",
+            "open_at": "9999-06-25T18:00:00",
+            "end_option": "quit",
+        }
+        self.grouppurchase_data_not_close_open_meeting_fail = {
+            "community": self.community.id,
+            "category": self.category.id,
+            "user": self.user.id,
+            "title": "purchase create feed",
+            "content": "purchase test feed create",
+            "product_name": "상품명",
+            "product_number": "10",
+            "product_price": "10000",
+            "link": "https://diane073.tistory.com/",
+            "person_limit": "2",
+            "location": "서울시 송파구, 석촌역 8번출구 앞",
+            "meeting_at": "2023-06-10T12:00:00",
+            "open_at": "9999-06-25T18:00:00",
+            "end_option": "quit",
+        }
+        self.grouppurchase_data_not_close_now_meeting_fail = {
+            "community": self.community.id,
+            "category": self.category.id,
+            "user": self.user.id,
+            "title": "purchase create feed",
+            "content": "purchase test feed create",
+            "product_name": "상품명",
+            "product_number": "10",
+            "product_price": "10000",
+            "link": "https://diane073.tistory.com/",
+            "person_limit": "2",
+            "location": "서울시 송파구, 석촌역 8번출구 앞",
+            "meeting_at": "2023-07-1T12:00:00",
+            "open_at": "2023-06-25T18:00:00",
+            "end_option": "quit",
         }
         self.grouppurchase_data_is_ended = {
             "community": self.community.id,
@@ -910,13 +976,13 @@ class GroupPurchaseViewTest(APITestCase):
             "product_name": "상품명",
             "product_number": "10",
             "product_price": "10000",
-            "link": "null",
+            "link": "https://diane073.tistory.com/",
             "person_limit": "2",
             "location": "서울시 송파구, 석촌역 8번출구 앞",
             "meeting_at": "2023-06-01T12:00:00",
             "open_at": "2023-06-01T18:00:00",
             "close_at": "2023-06-10T09:00:00",
-            "end_option": "공구를 계속 진행할 거예요",
+            "end_option": "quit",
             "is_ended": "True",
         }
         self.grouppurchase_update_data = {
@@ -928,13 +994,13 @@ class GroupPurchaseViewTest(APITestCase):
             "product_name": "product",
             "product_number": "2",
             "product_price": "10000",
-            "link": "null",
+            "link": "https://diane073.tistory.com/",
             "person_limit": "2",
             "location": "서울시 송파구, 석촌역 8번출구 앞",
             "meeting_at": "9999-06-30T12:00:00",
             "open_at": "9999-06-24T18:00:00",
             "close_at": "9999-06-25T09:00:00",
-            "end_option": "공구를 계속 진행할 거예요",
+            "end_option": "quit",
         }
         self.grouppurchase_update_data_meeting_fail = {
             "community": self.community.id,
@@ -945,13 +1011,13 @@ class GroupPurchaseViewTest(APITestCase):
             "product_name": "product",
             "product_number": "2",
             "product_price": "10000",
-            "link": "null",
+            "link": "https://diane073.tistory.com/",
             "person_limit": "2",
             "location": "서울시 송파구, 석촌역 8번출구 앞",
             "meeting_at": "2023-06-10T12:00:00",
             "open_at": "9999-06-24T18:00:00",
             "close_at": "9999-06-30T09:00:00",
-            "end_option": "공구를 계속 진행할 거예요",
+            "end_option": "quit",
         }
         self.grouppurchase_update_data_close_fail = {
             "community": self.community.id,
@@ -962,13 +1028,13 @@ class GroupPurchaseViewTest(APITestCase):
             "product_name": "product",
             "product_number": "2",
             "product_price": "10000",
-            "link": "null",
+            "link": "https://diane073.tistory.com/",
             "person_limit": "2",
             "location": "서울시 송파구, 석촌역 8번출구 앞",
             "meeting_at": "9999-06-30T12:00:00",
             "open_at": "9999-06-24T18:00:00",
             "close_at": "2023-06-10T09:00:00",
-            "end_option": "공구를 계속 진행할 거예요",
+            "end_option": "quit",
         }
         self.join_data = {"product_quantity": 1}
         self.join_data_update = {"product_quantity": 2}
@@ -992,73 +1058,129 @@ class GroupPurchaseViewTest(APITestCase):
         )
         self.assertEqual(response.status_code, 201)
 
-    def test_create_grouppurchase_feed(self):
+    def test_create_grouppurchase_feed_open_fail(self):
         """공구 게시글 open 시간이 현재시간보다 느리게 생성"""
         response = self.client.post(
             path=self.path,
             data=self.grouppurchase_data_open_fail,
             HTTP_AUTHORIZATION=f"Bearer {self.access_token}",
         )
-        self.assertEqual(response.message, "현재 이후의 시점을 선택해주세요.")
+        self.assertEqual(str(response.data["error"]), "모집 시작시간 오류. 현재 이후의 시점을 선택해주세요.")
         self.assertEqual(response.status_code, 400)
 
-    def test_create_grouppurchase_feed(self):
+    def test_create_grouppurchase_feed_close_fail(self):
         """공구 게시글 close 시간이 open 시간보다 느리게 생성"""
         response = self.client.post(
             path=self.path,
             data=self.grouppurchase_data_close_fail,
             HTTP_AUTHORIZATION=f"Bearer {self.access_token}",
         )
-        self.assertEqual(response.message, "공구 시작 시간보다 이후의 시점을 선택해주세요.")
+        self.assertEqual(
+            response.data["error"].title(), "모집 종료시간 오류. 모집 시작보다 이후의 시점을 선택해주세요."
+        )
         self.assertEqual(response.status_code, 400)
 
-    def test_create_grouppurchase_feed(self):
+    def test_create_grouppurchase_feed_meeting_fail(self):
         """공구 게시글 meeting 시간이 close 시간보다 느리게 생성"""
         response = self.client.post(
             path=self.path,
             data=self.grouppurchase_data_meeting_fail,
             HTTP_AUTHORIZATION=f"Bearer {self.access_token}",
         )
+        self.assertEqual(
+            response.data["error"].title(), "만날시간 오류. 모집 종료보다 이후의 시점을 선택해주세요."
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_create_grouppurchase_feed_not_close_open_fail(self):
+        """not close_at / 공구 게시글 open 시간이 현재시간보다 느리게 생성"""
+        response = self.client.post(
+            path=self.path,
+            data=self.grouppurchase_data_not_close_open_fail,
+            HTTP_AUTHORIZATION=f"Bearer {self.access_token}",
+        )
+        self.assertEqual(
+            response.data["error"].title(), "모집 시작시간 오류. 현재 이후의 시점을 선택해주세요."
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_create_grouppurchase_feed_not_close_meeting_fail(self):
+        """not close_at / 공구 게시글 meeting 시간이 open 시간보다 느리게 생성"""
+        response = self.client.post(
+            path=self.path,
+            data=self.grouppurchase_data_not_close_meeting_fail,
+            HTTP_AUTHORIZATION=f"Bearer {self.access_token}",
+        )
+        self.assertEqual(
+            response.data["error"].title(), "만날시간 오류. 모집 시작보다 이후의 시점을 선택해주세요."
+        )
         self.assertEqual(response.status_code, 400)
 
     def test_update_grouppurchase_feed(self):
         """공구 게시글 수정 성공"""
-        response = self.client.post(
-            path=self.path,
+        response = self.client.put(
+            path=self.path2,
             data=self.grouppurchase_update_data,
             HTTP_AUTHORIZATION=f"Bearer {self.access_token}",
         )
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 200)
 
-    def test_update_grouppurchase_feed(self):
-        """공구 게시글 권한없는 유저 실패"""
-        response = self.client.post(
-            path=self.path,
+    def test_update_grouppurchase_feed_not_matched_user(self):
+        """공구 게시글 권한없는 유저 수정 실패"""
+        response = self.client.put(
+            path=self.path2,
             data=self.grouppurchase_update_data,
             HTTP_AUTHORIZATION=f"Bearer {self.access_token2}",
         )
         self.assertEqual(response.status_code, 400)
 
-    def test_update_grouppurchase_feed(self):
+    def test_update_grouppurchase_feed_close_fail(self):
         """공구 게시글 수정 실패, close시간"""
-        response = self.client.post(
-            path=self.path,
+        response = self.client.put(
+            path=self.path2,
             data=self.grouppurchase_update_data_close_fail,
             HTTP_AUTHORIZATION=f"Bearer {self.access_token}",
         )
-        self.assertEqual(response.message, "현재보다 이후의 시점을 선택해주세요.")
-        self.assertEqual(response.status_code, 400)
-
-    def test_update_grouppurchase_feed(self):
-        """공구 게시글 수정 실패, meeting시간"""
-        response = self.client.post(
-            path=self.path,
-            data=self.grouppurchase_update_data_meeting_fail,
-            HTTP_AUTHORIZATION=f"Bearer {self.access_token}",
+        self.assertEqual(
+            response.data["error"].title(), "모집 종료시간 오류. 현재 이후의 시점을 선택해주세요."
         )
         self.assertEqual(response.status_code, 400)
 
-    def test_delete_grouppurchase_feed(self):
+    def test_update_grouppurchase_feed_meeting_fail(self):
+        """공구 게시글 수정 실패, meeting시간"""
+        response = self.client.put(
+            path=self.path2,
+            data=self.grouppurchase_update_data_meeting_fail,
+            HTTP_AUTHORIZATION=f"Bearer {self.access_token}",
+        )
+        self.assertEqual(
+            response.data["error"].title(), "만날시간 오류. 모집 종료보다 이후의 시점을 선택해주세요."
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_create_grouppurchase_feed_not_close_meeting_fail_1(self):
+        """not close_at / 현재 > meeting시간 실패"""
+        response = self.client.put(
+            path=self.path2,
+            data=self.grouppurchase_data_not_close_now_meeting_fail,
+            HTTP_AUTHORIZATION=f"Bearer {self.access_token}",
+        )
+        self.assertEqual(response.data["error"].title(), "만날시간 오류. 현재 이후의 시점을 선택해주세요.")
+        self.assertEqual(response.status_code, 400)
+
+    def test_create_grouppurchase_feed_not_close_meeting_fail_2(self):
+        """not close_at / open > meeting 실패"""
+        response = self.client.put(
+            path=self.path2,
+            data=self.grouppurchase_data_not_close_open_meeting_fail,
+            HTTP_AUTHORIZATION=f"Bearer {self.access_token}",
+        )
+        self.assertEqual(
+            response.data["error"].title(), "만날시간 오류. 모집 시작보다 이후의 시점을 선택해주세요."
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_delete_grouppurchase_feed_not_matched_user(self):
         """공구 게시글 권한없는 유저 삭제 실패"""
         response = self.client.delete(
             self.path2, HTTP_AUTHORIZATION=f"Bearer {self.access_token2}"
@@ -1072,21 +1194,21 @@ class GroupPurchaseViewTest(APITestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-    def test_delete_grouppurchase_feed(self):
+    def test_delete_grouppurchase_feed_not_matched_user(self):
         """공구 게시글 권한없는 유저 삭제 실패"""
         response = self.client.delete(
             self.path2, HTTP_AUTHORIZATION=f"Bearer {self.access_token2}"
         )
         self.assertEqual(response.status_code, 403)
 
-    def test_delete_grouppurchase_feed(self):
+    def test_delete_grouppurchase_feed_endned_fail(self):
         """종료된 공구 게시글 삭제 실패"""
         response = self.client.delete(
             self.path3, HTTP_AUTHORIZATION=f"Bearer {self.access_token}"
         )
         self.assertEqual(response.status_code, 405)
 
-    def test_get_grouppurchase_feed_liset(self):
+    def test_get_grouppurchase_feed_list(self):
         """공구 게시글 list get, 로그인 없이"""
         response = self.client.get(
             path=self.path4,

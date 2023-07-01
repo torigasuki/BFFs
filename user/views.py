@@ -33,7 +33,11 @@ from .serializers import (
 )
 from feed.serializers import ProfileFeedSerializer, ProfileGrouppurchaseSerializer
 from community.models import Community, CommunityAdmin
-from community.serializers import CommunityCreateSerializer, MyCommunitySerializer
+from community.serializers import (
+    CommunityCreateSerializer,
+    MyCommunitySerializer,
+    MyCommunityInfoSerializer,
+)
 from .validators import email_validator
 from .jwt_tokenserializer import CustomTokenObtainPairSerializer
 from .tasks import verifymail, pwresetMail
@@ -279,9 +283,6 @@ def get_token(user):
     return redirect(callback_url)
 
 
-# 프로필 ru
-
-
 class ProfileView(APIView):
     """프로필 R view"""
 
@@ -370,10 +371,34 @@ class ProfileDetailView(APIView):
             )
 
 
-# 방명록 crud
+class ProfileMyCommunityView(APIView):
+    """프로필, 내 커뮤니티 R view"""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user_id = request.user.id
+        profile = Profile.objects.get(user_id=user_id)
+        profile_serializer = UserProfileSerializer(profile)
+        community = (
+            CommunityAdmin.objects.filter(user_id=user_id)
+            .select_related("community")
+            .all()
+        )
+        community_info = Community.objects.filter(id__in=community)
+        community_serializer = MyCommunityInfoSerializer(community_info, many=True)
+        return Response(
+            {
+                "profile": profile_serializer.data,
+                "community": community_serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class GuestBookView(APIView):
+    """방명록 CR view"""
+
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get(self, request, profile_id):
@@ -392,6 +417,8 @@ class GuestBookView(APIView):
 
 
 class GuestBookDetailView(APIView):
+    """방명록 UD view"""
+
     permission_classes = [permissions.IsAuthenticated]
 
     def patch(self, request, profile_id, guestbook_id):
