@@ -12,7 +12,6 @@ from decouple import config
 from django.shortcuts import get_object_or_404
 
 
-
 class UserCreateSerializer(serializers.ModelSerializer):
     nickname = serializers.CharField()
     region = serializers.CharField()
@@ -42,14 +41,15 @@ class UserSerializer(serializers.ModelSerializer):
         )
         extra_kwargs = {"password": {"write_only": True}}
 
+
 class UserProfileSerializer(serializers.ModelSerializer):
     """profile serializer"""
+
     profileimageurl = serializers.SerializerMethodField()
     user_name = serializers.SerializerMethodField()
     user_email = serializers.SerializerMethodField()
     bookmark_count = serializers.SerializerMethodField()
     login_type = serializers.SerializerMethodField()
-    # 이메일,
 
     class Meta:
         model = Profile
@@ -65,6 +65,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "created_at",
             "login_type",
             "bookmark_count",
+            "is_agreed",
         )
 
     def get_profileimageurl(self, obj):
@@ -85,6 +86,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
     """profile 수정 serializer"""
+
     user_email = serializers.SerializerMethodField()
 
     class Meta:
@@ -95,6 +97,7 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
             "region",
             "introduction",
             "profileimage",
+            "is_agreed",
         )
         extra_kwargs = {
             "nickname": {
@@ -148,6 +151,7 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
 
 class UserDelSerializer(serializers.ModelSerializer):
     """user 회원탈퇴 serializer"""
+
     user_password = serializers.SerializerMethodField()
 
     class Meta:
@@ -191,6 +195,11 @@ class GuestBookCreateSerializer(serializers.ModelSerializer):
 
 class SearchUserSerializer(serializers.ModelSerializer):
     nickname = serializers.SerializerMethodField()
+    profileimage = serializers.SerializerMethodField()
+    profileimageurl = serializers.SerializerMethodField()
+    introduction = serializers.SerializerMethodField()
+    region = serializers.SerializerMethodField()
+    created_at = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -198,9 +207,29 @@ class SearchUserSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "nickname",
+            "profileimage",
+            "profileimageurl",
+            "introduction",
+            "region",
+            "created_at",
             "email",
             "last_login",
         )
 
     def get_nickname(self, obj):
         return obj.profile.nickname
+
+    def get_profileimage(self, obj):
+        return str(obj.profile.profileimage)
+
+    def get_profileimageurl(self, obj):
+        return config("BACKEND_URL") + "/media/" + str(obj.profile.profileimage)
+
+    def get_introduction(self, obj):
+        return obj.profile.introduction
+
+    def get_region(self, obj):
+        return obj.profile.region
+
+    def get_created_at(self, obj):
+        return obj.profile.created_at

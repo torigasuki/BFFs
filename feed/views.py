@@ -360,7 +360,7 @@ class FeedDetailView(APIView):
             for word in forbidden_word:
                 if word in request.data["content"] or word in request.data["title"]:
                     return Response(
-                        {"message": f"금지어 '{word}' 가 포함되어 있습니다"},
+                        {"message": f"금지어 '{word}' 이/가 포함되어 있습니다"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
             serializer = FeedCreateSerializer(feed, data=request.data)
@@ -370,15 +370,23 @@ class FeedDetailView(APIView):
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, feed_id):
+    def delete(self, request, community_url, feed_id):
         feed = get_object_or_404(Feed, id=feed_id)
-        if feed.user != request.user:
+        community = Community.objects.get(communityurl=community_url)
+
+        # 유저가 admin인지 확인
+        adminuser = CommunityAdmin.objects.filter(
+            user=request.user, community=community
+        ).last()
+        print(adminuser)
+        if feed.user != request.user and not adminuser:
             return Response(
-                {"error": "게시글 작성자만 삭제할 수 있습니다."}, status=status.HTTP_403_FORBIDDEN
+                {"message": "게시글 작성자와 관리자만 삭제할 수 있습니다"},
+                status=status.HTTP_403_FORBIDDEN,
             )
         else:
             feed.delete()
-            return Response({"message": "게시글을 삭제했습니다."}, status=status.HTTP_200_OK)
+            return Response({"message": "게시글을 삭제했습니다"}, status=status.HTTP_200_OK)
 
 
 class FeedCreateView(APIView):
@@ -395,7 +403,7 @@ class FeedCreateView(APIView):
         for word in forbidden_word:
             if word in request.data["content"] or word in request.data["title"]:
                 return Response(
-                    {"message": f"금지어 '{word}' 가 포함되어 있습니다"},
+                    {"message": f"금지어 '{word}' 이/가 포함되어 있습니다"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
         if serializer.is_valid():
@@ -503,7 +511,7 @@ class GroupPurchaseCreateView(APIView):
         for word in forbidden_word:
             if word in request.data["content"] or word in request.data["title"]:
                 return Response(
-                    {"message": f"금지어 {word}가 포함되어 있습니다"},
+                    {"message": f"금지어 '{word}' 이/가 포함되어 있습니다"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
         if serializer.is_valid():
@@ -558,7 +566,8 @@ class GroupPurchaseDetailView(APIView):
         for word in forbidden_word:
             if word in request.data["content"] or word in request.data["title"]:
                 return Response(
-                    {"message": "금지어가 포함되어 있습니다"}, status=status.HTTP_400_BAD_REQUEST
+                    {"message": f"금지어 '{word}' 이/가 포함되어 있습니다"},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
         if purchasefeed.user != request.user:
             return Response(

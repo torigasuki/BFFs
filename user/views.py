@@ -476,9 +476,12 @@ class SearchUserView(ListAPIView):
 
     def get_queryset(self):
         communityurl = self.request.GET.get("community_url")
-        queryset = User.objects.exclude(
-            mycomu__is_comuadmin=True, mycomu__community__communityurl=communityurl
-        ).exclude(
-            mycomu__is_subadmin=True, mycomu__community__communityurl=communityurl
-        )
-        return queryset
+        if communityurl:
+            queryset = User.objects.exclude(
+                mycomu__is_comuadmin=True, mycomu__community__communityurl=communityurl
+            ).exclude(
+                mycomu__is_subadmin=True, mycomu__community__communityurl=communityurl
+            )
+            return queryset
+        else:
+            return queryset
