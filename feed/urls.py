@@ -59,7 +59,7 @@ urlpatterns = [
     ),
     # grouppurchase 게시글 수정 삭제
     path(
-        "<str:community_url>/grouppurchase/<int:grouppurchase_id>/",
+        "grouppurchase/<int:grouppurchase_id>/",
         GroupPurchaseDetailView.as_view(),
         name="grouppurchase_put_delete_view",
     ),

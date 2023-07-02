@@ -217,17 +217,17 @@ class FeedDetailViewTest(APITestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_delete_feed_detail_not_user(self):
-        """피드 삭제 작성자 아닐때"""
+        """피드 삭제 작성자 아니고 서브어드민일 때 삭제 성공"""
         response = self.client.delete(
-            path=self.path2,
+            path=self.path,
             HTTP_AUTHORIZATION=f"Bearer {self.access_token2}",
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 200)
 
     def test_delete_feed_detail_success(self):
         """피드 삭제 성공"""
         response = self.client.delete(
-            path=self.path2,
+            path=self.path,
             HTTP_AUTHORIZATION=f"Bearer {self.access_token}",
         )
         self.assertEqual(response.status_code, 200)
@@ -397,7 +397,7 @@ class CommentTestView(APITestCase):
         }
         cls.user2 = User.objects.create_user(**cls.user2_data)
         cls.community = Community.objects.create(
-            title="title1", introduction="introduction1"
+            title="title1", communityurl="title1", introduction="introduction1"
         )
         cls.category = Category.objects.create(
             community=cls.community, category_name="얘기해요"
@@ -814,7 +814,7 @@ class GroupPurchaseViewTest(APITestCase):
             "grouppurchase_list_view", args=[cls.community.communityurl]
         )
         cls.path5 = reverse(
-            "grouppurchase_detail_view",
+            "grouppurchase_put_delete_view",
             args=[cls.community.communityurl, cls.grouppurchase.id],
         )
         cls.path6 = reverse("grouppurchase_join_view", args=[cls.grouppurchase.id])
@@ -1226,7 +1226,7 @@ class GroupPurchaseViewTest(APITestCase):
         """공구 게시글 상세 조회 실패"""
         response = self.client.get(
             path=reverse(
-                "grouppurchase_detail_view",
+                "grouppurchase_put_delete_view",
                 kwargs={
                     "community_url": self.community.communityurl,
                     "grouppurchase_id": 100,

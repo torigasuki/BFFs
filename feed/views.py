@@ -378,7 +378,6 @@ class FeedDetailView(APIView):
         adminuser = CommunityAdmin.objects.filter(
             user=request.user, community=community
         ).last()
-        print(adminuser)
         if feed.user != request.user and not adminuser:
             return Response(
                 {"message": "게시글 작성자와 관리자만 삭제할 수 있습니다"},
@@ -521,7 +520,6 @@ class GroupPurchaseCreateView(APIView):
                 {"message": "공동구매 게시글이 작성되었습니다"}, status=status.HTTP_201_CREATED
             )
         else:
-            print(serializer.errors)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
