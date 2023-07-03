@@ -13,11 +13,14 @@ from .views import (
 from feed.views import (
     FeedListView,
     FeedCategoryListView,
+    FeedCreateView,
     FeedDetailView,
-    LikeView,
-    FeedNotificationView,
     GroupPurchaseListView,
+    GroupPurchaseCreateView,
+    GroupPurchaseDetailView,
     GroupPurchaseJoinedUserView,
+    GroupPurchaseSelfEndView,
+    GroupPurchaseCommentView,
 )
 
 urlpatterns = [
@@ -66,41 +69,63 @@ urlpatterns = [
         FeedCategoryListView.as_view(),
         name="feed_category_list_view",
     ),
-    # feed 상세, 삭제 comment get
+    # feed 생성
     path(
-        "<str:community_url>/<int:feed_id>/",
+        "<str:community_url>/feed/",
+        FeedCreateView.as_view(),
+        name="feed_create_view",
+    ),
+    # feed 상세, comment get / 수정 삭제
+    path(
+        "<str:community_url>/feed/<int:feed_id>/",
         FeedDetailView.as_view(),
         name="feed_detail_view",
     ),
     # 이전 글, 다음 글
     path(
-        "<str:community_url>/<int:feed_id>/prev/",
+        "<str:community_url>/feed/<int:feed_id>/prev/",
         FeedPrevView.as_view(),
         name="prev_feed",
     ),
     path(
-        "<str:community_url>/<int:feed_id>/next/",
+        "<str:community_url>/feed/<int:feed_id>/next/",
         FeedNextView.as_view(),
         name="next_feed",
     ),
-    # like 설정/취소
-    path("<int:feed_id>/likes/", LikeView.as_view(), name="like_view"),
-    # feed 게시글 공지 설정/취소
-    path(
-        "<str:community_url>/<int:feed_id>/notification/",
-        FeedNotificationView.as_view(),
-        name="feed_notification_view",
-    ),
     # grouppurchase 전체 list
     path(
-        "<str:community_url>/grouppurchase/",
+        "<str:community_url>/grouppurchase/list/",
         GroupPurchaseListView.as_view(),
         name="grouppurchase_list_view",
     ),
+    # grouppurchase 게시글 생성
+    path(
+        "<str:community_url>/grouppurchase/",
+        GroupPurchaseCreateView.as_view(),
+        name="grouppurchase_create_view",
+    ),
+    # grouppurchase 상세 페이지 / 수정 삭제
+    path(
+        "<str:community_url>/grouppurchase/<int:grouppurchase_id>/",
+        GroupPurchaseDetailView.as_view(),
+        name="grouppurchase_detail_view",
+    ),
     # grouppurchase 참여 / 취소
     path(
-        "<int:grouppurchase_id>/join/",
+        "<str:community_url>/grouppurchase/<int:grouppurchase_id>/join/",
         GroupPurchaseJoinedUserView.as_view(),
         name="grouppurchase_join_view",
+    ),
+    # grouppurchase 작성자 모집 끝 옵션
+    path(
+        "<str:community_url>/grouppurchase/<int:grouppurchase_id>/self_end/",
+        GroupPurchaseSelfEndView.as_view(),
+        name="purchase_self_end_view",
+    ),
+    # grouppurchase comment 생성
+    path(
+        "<str:community_url>/grouppurchase/<int:grouppurchase_id>/purchasecomment/",
+        GroupPurchaseCommentView.as_view(),
+        name="purchase_comment_create_view",
     ),
 ]

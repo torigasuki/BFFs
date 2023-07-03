@@ -380,12 +380,10 @@ class ProfileMyCommunityView(APIView):
         user_id = request.user.id
         profile = Profile.objects.get(user_id=user_id)
         profile_serializer = UserProfileSerializer(profile)
-        community = (
-            CommunityAdmin.objects.filter(user_id=user_id)
-            .select_related("community")
-            .all()
+        community = CommunityAdmin.objects.filter(user_id=user_id).select_related(
+            "community"
         )
-        community_info = Community.objects.filter(id__in=community)
+        community_info = [c.community for c in community]
         community_serializer = MyCommunityInfoSerializer(community_info, many=True)
         return Response(
             {
