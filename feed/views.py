@@ -747,6 +747,15 @@ class GroupPurchaseCommentView(APIView):
 
     def post(self, request, grouppurchase_id):
         serializer = GroupPurchaseCommentSerializer(data=request.data)
+        forbidden_word = ForbiddenWord.objects.filter(
+            community__community__id=grouppurchase_id
+        ).values_list("word", flat=True)
+        for word in forbidden_word:
+            if word in request.data["text"]:
+                return Response(
+                    {"message": f"금지어 '{word}' 이/가 포함되어 있습니다"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         if serializer.is_valid():
             serializer.save(user=request.user, grouppurchase_id=grouppurchase_id)
             return Response(
@@ -759,6 +768,15 @@ class GroupPurchaseCommentView(APIView):
         purchase_comment = get_object_or_404(
             GroupPurchaseComment, id=purchase_comment_id
         )
+        forbidden_word = ForbiddenWord.objects.filter(
+            community__community__p_comment__id=purchase_comment_id
+        ).values_list("word", flat=True)
+        for word in forbidden_word:
+            if word in request.data["text"]:
+                return Response(
+                    {"message": f"금지어 '{word}' 이/가 포함되어 있습니다"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         if purchase_comment.user != request.user:
             return Response(
                 {"error": "댓글 작성자만 수정할 수 있습니다."}, status=status.HTTP_403_FORBIDDEN
