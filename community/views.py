@@ -192,7 +192,8 @@ class CommunityForbiddenView(APIView):
             admin.user for admin in community.comu.filter(is_subadmin=True)
         ]
         if community_admin == request.user or request.user in community_subadmin:
-            if request.data["word"] not in [
+            text = request.data["word"].strip()
+            if text not in [
                 forbidden.word
                 for forbidden in ForbiddenWord.objects.filter(community_id=community.id)
             ]:
