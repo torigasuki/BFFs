@@ -443,26 +443,58 @@ class GroupPurchaseCreateSerializer(serializers.ModelSerializer):
         """공구 create 시 시간유효성 validate"""
         now = datetime.now()
         open_at = datetime.strptime(data.get("open_at"), "%Y-%m-%dT%H:%M:%S")
-        close_at = datetime.strptime(data.get("close_at"), "%Y-%m-%dT%H:%M:%S")
         meeting_at = datetime.strptime(data.get("meeting_at"), "%Y-%m-%dT%H:%M:%S")
-        if now >= open_at or meeting_at < open_at:
-            raise serializers.ValidationError({"error": "현재 이후의 시점을 선택해주세요."})
-        if close_at and open_at > close_at:
-            raise serializers.ValidationError({"error": "공구 시작 시간보다 이후의 시점을 선택해주세요."})
-        if close_at and meeting_at < close_at:
-            raise serializers.ValidationError({"error": "공구가 끝나는 시간보다 이후의 시점을 선택해주세요."})
+        close = data.get("close_at")
+        if not close:
+            if now > open_at:
+                raise serializers.ValidationError(
+                    {"error": "모집 시작시간 오류. 현재 이후의 시점을 선택해주세요."}
+                )
+            if open_at >= meeting_at:
+                raise serializers.ValidationError(
+                    {"error": "만날시간 오류. 모집 시작보다 이후의 시점을 선택해주세요."}
+                )
+            return data
+        close_at = datetime.strptime(close, "%Y-%m-%dT%H:%M:%S")
+        if now > open_at:
+            raise serializers.ValidationError(
+                {"error": "모집 시작시간 오류. 현재 이후의 시점을 선택해주세요."}
+            )
+        if open_at >= close_at:
+            raise serializers.ValidationError(
+                {"error": "모집 종료시간 오류. 모집 시작보다 이후의 시점을 선택해주세요."}
+            )
+        if close_at > meeting_at:
+            raise serializers.ValidationError(
+                {"error": "만날시간 오류. 모집 종료보다 이후의 시점을 선택해주세요."}
+            )
         return data
 
     def validate_datetime_update(self, data):
         """공구 update 시 시간유효성 validate"""
         now = datetime.now()
         open_at = datetime.strptime(data.get("open_at"), "%Y-%m-%dT%H:%M:%S")
-        close_at = datetime.strptime(data.get("close_at"), "%Y-%m-%dT%H:%M:%S")
         meeting_at = datetime.strptime(data.get("meeting_at"), "%Y-%m-%dT%H:%M:%S")
-        if close_at and now > close_at and open_at > close_at:
-            raise serializers.ValidationError({"error": "현재보다 이후의 시점을 선택해주세요."})
-        if close_at and meeting_at < close_at:
-            raise serializers.ValidationError({"error": "공구가 끝나는 시간보다 이후의 시점을 선택해주세요."})
+        close = data.get("close_at")
+        if not close:
+            if open_at >= meeting_at:
+                raise serializers.ValidationError(
+                    {"error": "만날시간 오류. 모집 시작보다 이후의 시점을 선택해주세요."}
+                )
+            if now > meeting_at:
+                raise serializers.ValidationError(
+                    {"error": "만날시간 오류. 현재 이후의 시점을 선택해주세요."}
+                )
+            return data
+        close_at = datetime.strptime(close, "%Y-%m-%dT%H:%M:%S")
+        if now > close_at or open_at > close_at:
+            raise serializers.ValidationError(
+                {"error": "모집 종료시간 오류. 현재 이후의 시점을 선택해주세요."}
+            )
+        if meeting_at < close_at:
+            raise serializers.ValidationError(
+                {"error": "만날시간 오류. 모집 종료보다 이후의 시점을 선택해주세요."}
+            )
         return data
 
 

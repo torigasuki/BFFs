@@ -98,6 +98,7 @@ class Verify(models.Model):
 
 class Profile(models.Model):
     """profile 모델"""
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     nickname = models.CharField(max_length=24)
     profileimage = models.ImageField(upload_to="profile_img/", null=True, blank=True)
@@ -105,6 +106,7 @@ class Profile(models.Model):
     region = models.CharField(max_length=20)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_agreed = models.BooleanField(default=True)
 
     def __str__(self):
         return str(self.nickname)
@@ -112,6 +114,7 @@ class Profile(models.Model):
 
 class GuestBook(models.Model):
     """guestbook(방명록) 모델"""
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     profile = models.ForeignKey(
         Profile, on_delete=models.CASCADE, related_name="comment_set"

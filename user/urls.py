@@ -9,6 +9,7 @@ from .views import (
     VerificationEmailView,
     ProfileView,
     ProfileDetailView,
+    ProfileMyCommunityView,
     GuestBookView,
     GuestBookDetailView,
     MyPasswordResetView,
@@ -31,6 +32,11 @@ urlpatterns = [
     path("email/verify/", VerificationEmailView.as_view(), name="verify"),
     path("profile/", ProfileView.as_view(), name="profile_view"),
     path("<int:user_id>/", ProfileDetailView.as_view(), name="profile_detail_view"),
+    path(
+        "mycommunity/",
+        ProfileMyCommunityView.as_view(),
+        name="profile_my_comu_view",
+    ),
     path(
         "<int:profile_id>/guestbook/",
         GuestBookView.as_view(),

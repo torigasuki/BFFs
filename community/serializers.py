@@ -1,9 +1,10 @@
 import re
 from rest_framework import serializers
 from decouple import config
+from datetime import datetime
 
 from user.models import User
-from feed.models import Feed, Category
+from feed.models import Feed, Category, GroupPurchase
 from feed.serializers import FeedTitleSerializer
 from .models import Community, CommunityAdmin, ForbiddenWord
 from .validators import can_only_eng_int_underbar_and_hyphen
@@ -200,6 +201,69 @@ class MyCommunitySerializer(serializers.ModelSerializer):
 
     def get_imageurl(self, obj):
         return config("BACKEND_URL") + "/media/" + str(obj.community.image)
+
+
+class MyCommunityInfoSerializer(serializers.ModelSerializer):
+    bookmark_count = serializers.SerializerMethodField()
+    feed_count = serializers.SerializerMethodField()
+    recent_act = serializers.SerializerMethodField()
+    imageurl = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Community
+        fields = [
+            "title",
+            "communityurl",
+            "introduction",
+            "image",
+            "imageurl",
+            "bookmark_count",
+            "feed_count",
+            "recent_act",
+        ]
+
+    def get_imageurl(self, obj):
+        return config("BACKEND_URL") + "/media/" + str(obj.image)
+
+    def get_bookmark_count(self, obj):
+        return obj.bookmarked.count()
+
+    def get_feed_count(self, obj):
+        category = obj.community_category.all()
+        feed = Feed.objects.filter(category_id__in=category)
+        grouppurchase = GroupPurchase.objects.filter(category_id__in=category)
+        return feed.count() + grouppurchase.count()
+
+    def get_recent_act(self, obj):
+        category = obj.community_category.all()
+        feed = (
+            Feed.objects.filter(category_id__in=category)
+            .order_by("created_at")
+            .values("created_at")
+            .last()
+        )
+        grouppurchase = (
+            GroupPurchase.objects.filter(category_id__in=category)
+            .order_by("created_at")
+            .values("created_at")
+            .last()
+        )
+        date_format = "%Y-%m-%d %H:%M:%S"
+        if not feed and not grouppurchase:
+            return "아직 활동이 없습니다"
+        if not feed:
+            grouppurchase_time = grouppurchase["created_at"].strftime(date_format)
+            return grouppurchase
+        if not grouppurchase:
+            feed_time = feed["created_at"].strftime(date_format)
+            return feed_time
+        if feed and grouppurchase:
+            feed_time = feed["created_at"].strftime(date_format)
+            grouppurchase_time = grouppurchase["created_at"].strftime(date_format)
+            if feed_time > grouppurchase_time:
+                return feed_time
+            else:
+                return grouppurchase_time
 
 
 class CommunityAdminSerializer(serializers.ModelSerializer):
