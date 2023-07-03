@@ -210,13 +210,13 @@ class CocommentView(APIView):
             return Response({"message": "대댓글을 삭제했습니다."}, status=status.HTTP_200_OK)
 
 
-class FeedAllView(APIView):
-    """랜덤 커뮤 인기 feed list"""
+# class FeedAllView(APIView):
+#     """랜덤 커뮤 인기 feed list"""
 
-    def get(self, request):
-        feeds = Feed.objects.all().order_by("-created_at")[:3]
-        serializer = FeedListSerializer(feeds, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+#     def get(self, request):
+#         feeds = Feed.objects.all().order_by("-created_at")[:3]
+#         serializer = FeedListSerializer(feeds, many=True)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class FeedListView(APIView):
@@ -492,7 +492,7 @@ class FeedSearchView(ListAPIView):
 class GroupPurchaseCreateView(APIView):
     """공구 게시글 get, 생성 view"""
 
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, community_url):
         community = get_object_or_404(Community, communityurl=community_url)
