@@ -311,7 +311,10 @@ class GroupPurchaseListSerializer(serializers.ModelSerializer):
         return Profile.objects.get(user=obj.user).nickname
 
     def get_joined_user_count(self, obj):
-        return obj.grouppurchase.count()
+        real_join = JoinedUser.objects.filter(
+            grouppurchase_id=obj.id, is_deleted=False
+        ).count()
+        return real_join
 
     def get_comments_count(self, obj):
         return obj.p_comment.count()
