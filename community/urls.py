@@ -45,15 +45,4 @@ urlpatterns = [
         name="community_bookmark_view",
     ),
     path("search", SearchCommunityView.as_view(), name="search_community_view"),
-    # 이전 글, 다음 글
-    # path(
-    #     "<str:community_url>/feed/<int:feed_id>/prev/",
-    #     FeedPrevView.as_view(),
-    #     name="prev_feed",
-    # ),
-    # path(
-    #     "<str:community_url>/feed/<int:feed_id>/next/",
-    #     FeedNextView.as_view(),
-    #     name="next_feed",
-    # ),
 ]

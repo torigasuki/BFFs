@@ -110,6 +110,17 @@ class Cocomment(CommentBaseModel):
         return self.text
 
 
+class GroupPurchaseMapData(models.Model):
+    """naver map data"""
+
+    location_address = models.CharField(max_length=300)
+    coordinate_x = models.FloatField()
+    coordinate_y = models.FloatField()
+
+    def __str__(self):
+        return f"{str(self.location_address)}, x: {self.coordinate_x}, y: {self.coordinate_y}"
+
+
 class GroupPurchase(models.Model, HitCountMixin):
     """공동구매 게시글 모델"""
 
@@ -130,6 +141,7 @@ class GroupPurchase(models.Model, HitCountMixin):
     )
 
     location = models.CharField(max_length=100, help_text="만날 위치")
+    # map_data = models.ForeignKey("GroupPurchaseMapData", on_delete=models.CASCADE, help_text="만날 위치")
     meeting_at = models.DateTimeField(help_text="공구 성공 후 만날 시간")
     open_at = models.DateTimeField(null=False, help_text="모집 시작")
     close_at = models.DateTimeField(null=True, help_text="모집 종료")
@@ -142,7 +154,7 @@ class GroupPurchase(models.Model, HitCountMixin):
     end_option = models.CharField(choices=END_CHOICES, max_length=20)
 
     community = models.ForeignKey(
-        Community, on_delete=models.CASCADE, related_name="community"
+        Community, on_delete=models.CASCADE, related_name="purchase_community"
     )
     category = models.ForeignKey(
         "feed.Category",
@@ -170,12 +182,13 @@ class GroupPurchase(models.Model, HitCountMixin):
 
     def check_end_person_limit_point(self, grouppurchase_id):
         """공구 제한 인원이 채워질 경우 공구 종료"""
-        purchasefeed = GroupPurchase.objects.get(id=grouppurchase_id)
-        if purchasefeed.grouppurchase is None:
+        joined = JoinedUser.objects.filter(
+            grouppurchase_id=grouppurchase_id, is_deleted=False
+        )
+        if not joined:
             return False
         else:
-            joined = purchasefeed.grouppurchase.count()
-            person_count = self.person_limit - joined
+            person_count = self.person_limit - joined.count()
             if person_count <= 0:
                 self.is_ended = True
                 self.save()

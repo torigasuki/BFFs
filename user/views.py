@@ -317,8 +317,8 @@ class ProfileDetailView(APIView):
             .prefetch_related("grouppurchase")
             .all()
         )
-        joined_grouppurchase = GroupPurchase.objects.filter(id__in=joined).order_by(
-            "-created_at"
+        joined_grouppurchase = sorted(
+            [j.grouppurchase for j in joined], key=lambda x: x.created_at, reverse=True
         )
         joined_grouppurchase_serializer = ProfileGrouppurchaseSerializer(
             joined_grouppurchase, many=True
@@ -352,7 +352,7 @@ class ProfileDetailView(APIView):
                     {"message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST
                 )
         else:
-            return Response({"message": "권한이 없습니다!"}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({"message": "권한이 없습니다!"}, status=status.HTTP_403_FORBIDDEN)
 
     def delete(self, request, user_id):
         profile = User.objects.get(id=user_id)
@@ -435,7 +435,7 @@ class GuestBookDetailView(APIView):
             comment.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
-            return Response("권한이 없습니다.", status=status.HTTP_401_UNAUTHORIZED)
+            return Response("권한이 없습니다.", status=status.HTTP_403_FORBIDDEN)
 
 
 class MyPasswordResetView(APIView):
@@ -474,12 +474,9 @@ class SearchUserView(ListAPIView):
 
     def get_queryset(self):
         communityurl = self.request.GET.get("community_url")
-        if communityurl:
-            queryset = User.objects.exclude(
-                mycomu__is_comuadmin=True, mycomu__community__communityurl=communityurl
-            ).exclude(
-                mycomu__is_subadmin=True, mycomu__community__communityurl=communityurl
-            )
-            return queryset
-        else:
-            return queryset
+        queryset = User.objects.exclude(
+            mycomu__is_comuadmin=True, mycomu__community__communityurl=communityurl
+        ).exclude(
+            mycomu__is_subadmin=True, mycomu__community__communityurl=communityurl
+        )
+        return queryset

@@ -113,7 +113,7 @@ urlpatterns = [
     path(
         "purchasecomment/<int:purchase_comment_id>/",
         GroupPurchaseCommentView.as_view(),
-        name="purchase_comment_put_delete_view",
+        name="purchase_comment_detail_view",
     ),
     path("image/upload/", ImageUploadAndDeleteView.as_view(), name="image_upload_view"),
     # 랜덤 커뮤 인기 feed list 조회
