@@ -253,37 +253,3 @@ class SearchCommunityView(ListAPIView):
     filter_backends = [filters.SearchFilter]
     search_fields = ["title", "communityurl", "introduction"]
     pagination_class = None
-
-
-class FeedNextView(APIView):
-    """피드 다음 글"""
-
-    def get(self, request, community_url, feed_id):
-        community = Community.objects.get(communityurl=community_url)
-        feed_list = Feed.objects.filter(
-            category__community=community, id__gt=feed_id
-        ).order_by("created_at")
-        if not feed_list:
-            return Response({"message": "다음 게시글이 없습니다"})
-        return Response(
-            community_url=community_url,
-            feed_id=feed_list.first().id,
-            status=status.HTTP_200_OK,
-        )
-
-
-class FeedPrevView(APIView):
-    """피드 이전 글"""
-
-    def get(self, request, community_url, feed_id):
-        community = Community.objects.get(communityurl=community_url)
-        feed_list = Feed.objects.filter(
-            category__community=community, id__lt=feed_id
-        ).order_by("-created_at")
-        if not feed_list:
-            return Response({"message": "이전 게시글이 없습니다"})
-        return Response(
-            community_url=community_url,
-            feed_id=feed_list.first().id,
-            status=status.HTTP_200_OK,
-        )

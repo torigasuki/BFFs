@@ -3,6 +3,7 @@ from rest_framework.generics import get_object_or_404, ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db import transaction
+from django.db.models import Prefetch
 from rest_framework.pagination import PageNumberPagination
 from community.models import Community, CommunityAdmin, ForbiddenWord
 from community.serializers import (
@@ -89,12 +90,13 @@ class CommentView(APIView):
         forbidden_word = ForbiddenWord.objects.filter(
             community__community_category__feed_category__id=feed_id
         ).values_list("word", flat=True)
-        for word in forbidden_word:
-            if word in request.data["text"]:
-                return Response(
-                    {"message": f"금지어 '{word}' 이/가 포함되어 있습니다"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+        if forbidden_word:
+            for word in forbidden_word:
+                if word in request.data["text"]:
+                    return Response(
+                        {"message": f"금지어 '{word}' 이/가 포함되어 있습니다"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
         if serializer.is_valid():
             serializer.save(user=request.user, feed_id=feed_id)
             feed = get_object_or_404(Feed, id=feed_id)
@@ -118,12 +120,13 @@ class CommentView(APIView):
             forbidden_word = ForbiddenWord.objects.filter(
                 community__community_category__feed_category__comment__id=comment_id
             ).values_list("word", flat=True)
-            for word in forbidden_word:
-                if word in request.data["text"]:
-                    return Response(
-                        {"message": f"금지어 '{word}' 이/가 포함되어 있습니다"},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
+            if forbidden_word:
+                for word in forbidden_word:
+                    if word in request.data["text"]:
+                        return Response(
+                            {"message": f"금지어 '{word}' 이/가 포함되어 있습니다"},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
             if serializer.is_valid():
                 serializer.save()
                 return Response({"message": "댓글을 수정했습니다."}, status=status.HTTP_200_OK)
@@ -164,12 +167,13 @@ class CocommentView(APIView):
         forbidden_word = ForbiddenWord.objects.filter(
             community__community_category__feed_category__comment__id=comment_id
         ).values_list("word", flat=True)
-        for word in forbidden_word:
-            if word in request.data["text"]:
-                return Response(
-                    {"message": f"금지어 '{word}' 이/가 포함되어 있습니다"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+        if forbidden_word:
+            for word in forbidden_word:
+                if word in request.data["text"]:
+                    return Response(
+                        {"message": f"금지어 '{word}' 이/가 포함되어 있습니다"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
         if serializer.is_valid():
             serializer.save(user=request.user, comment_id=comment_id)
             return Response({"message": "대댓글을 작성했습니다."}, status=status.HTTP_201_CREATED)
@@ -186,12 +190,13 @@ class CocommentView(APIView):
             forbidden_word = ForbiddenWord.objects.filter(
                 community__community_category__feed_category__comment__cocomment__id=cocomment_id
             ).values_list("word", flat=True)
-            for word in forbidden_word:
-                if word in request.data["text"]:
-                    return Response(
-                        {"message": f"금지어 '{word}' 이/가 포함되어 있습니다"},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
+            if forbidden_word:
+                for word in forbidden_word:
+                    if word in request.data["text"]:
+                        return Response(
+                            {"message": f"금지어 '{word}' 이/가 포함되어 있습니다"},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
             serializer = CocommentSerializer(cocomment, data=request.data)
             if serializer.is_valid():
                 serializer.save()
@@ -250,11 +255,10 @@ class FeedCategoryListView(APIView):
     pagination_class = CustomPagination()
 
     def get(self, request, community_url, category_url):
-        community_category = get_object_or_404(Community, communityurl=community_url)
-        category_serializer = CommunityCategorySerializer(community_category)
-        community_title = get_object_or_404(Community, communityurl=community_url)
+        community = get_object_or_404(Community, communityurl=community_url)
+        category_serializer = CommunityCategorySerializer(community)
         community_serializer = CommunityCreateSerializer(
-            community_title, context={"request": request}
+            community, context={"request": request}
         )
         category_name = (
             Category.objects.filter(
@@ -361,7 +365,7 @@ class FeedDetailView(APIView):
                 for word in forbidden_word:
                     if word in request.data["content"] or word in request.data["title"]:
                         return Response(
-                            {"message": f"금지어 '{word}' 이/가 포함되어 있습니다"},
+                            {"message": f"금지어 '{word}' 가 포함되어 있습니다"},
                             status=status.HTTP_400_BAD_REQUEST,
                         )
             serializer = FeedCreateSerializer(feed, data=request.data)
@@ -373,11 +377,9 @@ class FeedDetailView(APIView):
 
     def delete(self, request, community_url, feed_id):
         feed = get_object_or_404(Feed, id=feed_id)
-        community = Community.objects.get(communityurl=community_url)
-
         # 유저가 admin인지 확인
         adminuser = CommunityAdmin.objects.filter(
-            user=request.user, community=community
+            user=request.user, community=feed.category.community
         ).last()
         if feed.user != request.user and not adminuser:
             return Response(
@@ -404,7 +406,7 @@ class FeedCreateView(APIView):
             for word in forbidden_word:
                 if word in request.data["content"] or word in request.data["title"]:
                     return Response(
-                        {"message": f"금지어 '{word}' 이/가 포함되어 있습니다"},
+                        {"message": f"금지어 '{word}' 가 포함되어 있습니다"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
         if serializer.is_valid():
@@ -490,35 +492,50 @@ class GroupPurchaseCreateView(APIView):
     # permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, community_url):
-        community = get_object_or_404(Community, communityurl=community_url)
-        category = get_object_or_404(
-            Category, community=community, category_url="groupbuy"
+        """공구 수정 데이터 get"""
+        community = get_object_or_404(
+            Community.objects.prefetch_related(
+                Prefetch(
+                    "community_category",
+                    queryset=Category.objects.filter(category_url="groupbuy"),
+                    to_attr="category",
+                )
+            ),
+            communityurl=community_url,
         )
         grouppruchase = GroupPurchase.objects.filter(
-            community_id=community.id, category_id=category.id
+            community_id=community, category=community.category[0].id
         )
         serializer = GroupPurchaseCreateSerializer(grouppruchase, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, community_url):
         serializer = GroupPurchaseCreateSerializer(data=request.data)
-        community = get_object_or_404(Community, communityurl=community_url)
-        category = get_object_or_404(
-            Category, community=community, category_url="groupbuy"
+        community = get_object_or_404(
+            Community.objects.prefetch_related(
+                Prefetch(
+                    "community_category",
+                    queryset=Category.objects.filter(category_url="groupbuy"),
+                    to_attr="category",
+                )
+            ),
+            communityurl=community_url,
         )
         forbidden_word = ForbiddenWord.objects.filter(
-            community_id=category.community.id
+            community_id=community.id
         ).values_list("word", flat=True)
         if forbidden_word:
             for word in forbidden_word:
                 if word in request.data["content"] or word in request.data["title"]:
                     return Response(
-                        {"message": f"금지어 '{word}' 이/가 포함되어 있습니다"},
+                        {"message": f"금지어 {word}가 포함되어 있습니다"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
         if serializer.is_valid():
             serializer.validate_datetime(request.data)
-            serializer.save(community=community, category=category, user=request.user)
+            serializer.save(
+                community=community, category=community.category[0], user=request.user
+            )
             return Response(
                 {"message": "공동구매 게시글이 작성되었습니다"}, status=status.HTTP_201_CREATED
             )
@@ -534,13 +551,14 @@ class GroupPurchaseDetailView(APIView):
     # 조회수 기능을 위한 모델 세팅
     model = GroupPurchase
 
-    # 공구 상세 및 comment,cocomment 함께 가져오기
+    # 공구 상세 및 comment 함께 가져오기
     def get(self, request, community_url, grouppurchase_id):
-        purchasefeed = get_object_or_404(GroupPurchase, id=grouppurchase_id)
+        purchasefeed = get_object_or_404(
+            GroupPurchase.objects.select_related("community"), id=grouppurchase_id
+        )
         purchase_serializer = GroupPurchaseDetailSerializer(purchasefeed)
-        community = Community.objects.get(communityurl=community_url)
         commnity_serializer = CommunityUrlSerializer(
-            community, context={"request": request}
+            purchasefeed.community, context={"request": request}
         )
         purchase_comment = purchasefeed.p_comment.all().order_by("created_at")
         comment_serializer = CommentSerializer(purchase_comment, many=True)
@@ -556,13 +574,14 @@ class GroupPurchaseDetailView(APIView):
         return Response(response, status=status.HTTP_200_OK)
 
     def put(self, request, community_url, grouppurchase_id):
-        purchasefeed = get_object_or_404(GroupPurchase, id=grouppurchase_id)
-        community = get_object_or_404(Community, communityurl=community_url)
-        category = get_object_or_404(
-            Category, community=community, category_url="groupbuy"
+        purchasefeed = get_object_or_404(
+            GroupPurchase.objects.select_related("category").select_related(
+                "community"
+            ),
+            id=grouppurchase_id,
         )
         forbidden_word = ForbiddenWord.objects.filter(
-            community_id=category.community.id
+            community=purchasefeed.community
         ).values_list("word", flat=True)
         if forbidden_word:
             for word in forbidden_word:
@@ -580,7 +599,9 @@ class GroupPurchaseDetailView(APIView):
             if serializer.is_valid():
                 serializer.validate_datetime_update(request.data)
                 serializer.save(
-                    community=community, category=category, user=request.user
+                    community=purchasefeed.community,
+                    category=purchasefeed.category,
+                    user=request.user,
                 )
                 return Response(
                     {"message": "공구 게시글이 수정되었습니다"}, status=status.HTTP_200_OK
@@ -752,14 +773,15 @@ class GroupPurchaseCommentView(APIView):
     def post(self, request, community_url, grouppurchase_id):
         serializer = GroupPurchaseCommentSerializer(data=request.data)
         forbidden_word = ForbiddenWord.objects.filter(
-            community__community__id=grouppurchase_id
+            community__purchase_community__id=grouppurchase_id
         ).values_list("word", flat=True)
-        for word in forbidden_word:
-            if word in request.data["text"]:
-                return Response(
-                    {"message": f"금지어 '{word}' 이/가 포함되어 있습니다"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+        if forbidden_word:
+            for word in forbidden_word:
+                if word in request.data["text"]:
+                    return Response(
+                        {"message": f"금지어 '{word}' 이/가 포함되어 있습니다"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
         if serializer.is_valid():
             serializer.save(user=request.user, grouppurchase_id=grouppurchase_id)
             return Response(
@@ -773,14 +795,15 @@ class GroupPurchaseCommentView(APIView):
             GroupPurchaseComment, id=purchase_comment_id
         )
         forbidden_word = ForbiddenWord.objects.filter(
-            community__community__p_comment__id=purchase_comment_id
+            community__purchase_community__p_comment__id=purchase_comment_id
         ).values_list("word", flat=True)
-        for word in forbidden_word:
-            if word in request.data["text"]:
-                return Response(
-                    {"message": f"금지어 '{word}' 이/가 포함되어 있습니다"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+        if forbidden_word:
+            for word in forbidden_word:
+                if word in request.data["text"]:
+                    return Response(
+                        {"message": f"금지어 '{word}' 이/가 포함되어 있습니다"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
         if purchase_comment.user != request.user:
             return Response(
                 {"error": "댓글 작성자만 수정할 수 있습니다."}, status=status.HTTP_403_FORBIDDEN

@@ -1,4 +1,5 @@
 from datetime import datetime
+from pytz import timezone
 from rest_framework import serializers
 
 from community.models import Community
@@ -310,16 +311,19 @@ class GroupPurchaseListSerializer(serializers.ModelSerializer):
         return Profile.objects.get(user=obj.user).nickname
 
     def get_joined_user_count(self, obj):
-        return obj.grouppurchase.count()
+        real_join = JoinedUser.objects.filter(
+            grouppurchase_id=obj.id, is_deleted=False
+        ).count()
+        return real_join
 
     def get_comments_count(self, obj):
         return obj.p_comment.count()
 
     def get_grouppurchase_status(self, obj):
         """공구 게시글 상태 check"""
-        now = datetime.now()
+        now = datetime.now(timezone("Asia/Seoul"))
         is_ended = obj.is_ended
-        open_at = datetime.strptime(str(obj.open_at), "%Y-%m-%d %H:%M:%S")
+        open_at = datetime.strptime(str(obj.open_at), "%Y-%m-%d %H:%M:%S%z")
         if not obj.close_at:
             if is_ended:
                 return "종료"
@@ -327,9 +331,8 @@ class GroupPurchaseListSerializer(serializers.ModelSerializer):
                 return "시작 전"
             elif not is_ended and open_at < now:
                 return "진행 중"
-
         else:
-            close_at = datetime.strptime(str(obj.close_at), "%Y-%m-%d %H:%M:%S")
+            close_at = datetime.strptime(str(obj.open_at), "%Y-%m-%d %H:%M:%S%z")
             if is_ended:
                 return "종료"
             elif close_at < now:
@@ -348,7 +351,7 @@ class GroupPurchaseDetailSerializer(serializers.ModelSerializer):
     purchase_quantity = serializers.SerializerMethodField()
     joined_user_count = serializers.SerializerMethodField()
     joined_users = serializers.SerializerMethodField()
-    comment_count = serializers.SerializerMethodField()
+    comments_count = serializers.SerializerMethodField()
     end_choice = serializers.SerializerMethodField()
     category_name = serializers.SerializerMethodField()
     category_url = serializers.SerializerMethodField()
@@ -359,9 +362,9 @@ class GroupPurchaseDetailSerializer(serializers.ModelSerializer):
 
     def get_grouppurchase_status(self, obj):
         """공구 게시글 상태 check"""
-        now = datetime.now()
+        now = datetime.now(timezone("Asia/Seoul"))
         is_ended = obj.is_ended
-        open_at = datetime.strptime(str(obj.open_at), "%Y-%m-%d %H:%M:%S")
+        open_at = datetime.strptime(str(obj.open_at), "%Y-%m-%d %H:%M:%S%z")
         if not obj.close_at:
             if is_ended:
                 return "종료"
@@ -370,7 +373,7 @@ class GroupPurchaseDetailSerializer(serializers.ModelSerializer):
             elif not is_ended and open_at < now:
                 return "진행 중"
         else:
-            close_at = datetime.strptime(str(obj.close_at), "%Y-%m-%d %H:%M:%S")
+            close_at = datetime.strptime(str(obj.close_at), "%Y-%m-%d %H:%M:%S%z")
             if is_ended:
                 return "종료"
             elif close_at < now:
@@ -381,8 +384,15 @@ class GroupPurchaseDetailSerializer(serializers.ModelSerializer):
             elif close_at and not is_ended and close_at > now and open_at < now:
                 return "진행 중"
 
-    def get_joined_user(self, obj):
-        real_join = JoinedUser.objects.filter(user=obj.joined_user, is_deleted=False)
+    def get_joined_users(self, obj):
+        real_join = JoinedUser.objects.filter(grouppurchase_id=obj.id, is_deleted=False)
+        serializer = JoinedUserListSerializer(real_join, many=True)
+        return serializer.data
+
+    def get_joined_user_count(self, obj):
+        real_join = JoinedUser.objects.filter(
+            grouppurchase_id=obj.id, is_deleted=False
+        ).count()
         return real_join
 
     def get_purchase_quantity(self, obj):
@@ -393,15 +403,7 @@ class GroupPurchaseDetailSerializer(serializers.ModelSerializer):
             or 0
         )
 
-    def get_joined_user_count(self, obj):
-        return obj.grouppurchase.count()
-
-    def get_joined_users(self, obj):
-        user = JoinedUser.objects.filter(grouppurchase_id=obj.id)
-        serializer = JoinedUserListSerializer(user, many=True)
-        return serializer.data
-
-    def get_comment_count(self, obj):
+    def get_comments_count(self, obj):
         return obj.p_comment.count()
 
     def get_end_choice(self, obj):
