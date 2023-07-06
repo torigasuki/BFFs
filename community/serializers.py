@@ -1,7 +1,6 @@
 import re
 from rest_framework import serializers
 from decouple import config
-from datetime import datetime
 
 from user.models import User
 from feed.models import Feed, Category, GroupPurchase

@@ -1,7 +1,6 @@
 from decouple import config
 import requests
 
-from django.db.models import Q
 from django.contrib.auth.views import (
     PasswordResetConfirmView,
     PasswordResetCompleteView,
@@ -21,7 +20,6 @@ from rest_framework_simplejwt.views import TokenViewBase
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from .models import User, Profile, GuestBook, Verify
-from feed.models import GroupPurchase
 from .serializers import (
     UserCreateSerializer,
     UserDelSerializer,
@@ -32,7 +30,7 @@ from .serializers import (
     SearchUserSerializer,
 )
 from feed.serializers import ProfileFeedSerializer, ProfileGrouppurchaseSerializer
-from community.models import Community, CommunityAdmin
+from community.models import CommunityAdmin
 from community.serializers import (
     CommunityCreateSerializer,
     MyCommunitySerializer,
@@ -446,8 +444,8 @@ class MyPasswordResetView(APIView):
         user = get_object_or_404(User, email=email)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
-        reset_url = request.build_absolute_uri(
-            reverse("password_reset_confirm", kwargs={"uidb64": uid, "token": token})
+        reset_url = config("BACKEND_URL") + reverse(
+            "password_reset_confirm", kwargs={"uidb64": uid, "token": token}
         )
         pwresetMail.delay(email, reset_url)
         return Response({"detail": "비밀번호 변경 메일 발송!"})

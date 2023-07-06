@@ -35,6 +35,7 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -46,11 +47,21 @@ INSTALLED_APPS = [
     "corsheaders",
     "django_cron",
     "hitcount",
+    "alarm",
     "user",
     "community",
     "feed",
     "meetai",
 ]
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -64,6 +75,9 @@ MIDDLEWARE = [
 ]
 
 REST_FRAMEWORK = {
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+    ],
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
@@ -89,23 +103,26 @@ TEMPLATES = [
     },
 ]
 
+ASGI_APPLICATION = "BFFs.asgi.application"
 WSGI_APPLICATION = "BFFs.wsgi.application"
-
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql" if config("POSTGRES_DB",default=False) else "django.db.backends.sqlite3",
-        "NAME": config("POSTGRES_DB") if config("POSTGRES_DB",default=False) else os.path.join(BASE_DIR, "db.sqlite3"),
+        "ENGINE": "django.db.backends.postgresql"
+        if config("POSTGRES_DB", default=False)
+        else "django.db.backends.sqlite3",
+        "NAME": config("POSTGRES_DB")
+        if config("POSTGRES_DB", default=False)
+        else os.path.join(BASE_DIR, "db.sqlite3"),
         "USER": config("POSTGRES_USER", default=""),
         "PASSWORD": config("POSTGRES_PASSWORD", default=""),
         "HOST": config("POSTGRES_HOST", default=""),
         "PORT": config("POSTGRES_PORT", default=False, cast=int),
     }
 }
-
 
 
 # Password validation
@@ -217,9 +234,8 @@ CELERY_TIMEZONE = "Asia/Seoul"
 CORS_ALLOWED_ORIGINS = [
     "https://makebestie.com",
     "https://api.makebestie.com",
-    "http://localhost:8080",
 ]
 
-# CORS_ORIGIN_WHITELIST = ['http://13.125.60.48']
+CORS_ORIGIN_WHITELIST = ["http://13.125.60.48"]
 
-# CSRF_TRUSTED_ORIGINS = CORS_ORIGIN_WHITELIST
+CSRF_TRUSTED_ORIGINS = CORS_ORIGIN_WHITELIST
