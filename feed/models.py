@@ -1,11 +1,10 @@
-from typing import Any
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from hitcount.models import HitCountMixin
 
 from community.models import Community
-from user.models import User, Profile
+from user.models import User
 
 import os
 from uuid import uuid4
