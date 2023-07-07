@@ -287,7 +287,7 @@ class ProfileView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        profile = Profile.objects.all().order_by("-user__last_login")
+        profile = Profile.objects.all().order_by("?")
         profile_serializer = UserProfileSerializer(profile, many=True)
         return Response(profile_serializer.data, status=status.HTTP_200_OK)
 
@@ -321,7 +321,9 @@ class ProfileDetailView(APIView):
         joined_grouppurchase_serializer = ProfileGrouppurchaseSerializer(
             joined_grouppurchase, many=True
         )
-        guestbook = GuestBook.objects.filter(profile_id=user_id).order_by("-created_at")
+        guestbook = GuestBook.objects.filter(profile_id=profile.id).order_by(
+            "-created_at"
+        )
         guestbook_serializer = GuestBookSerializer(guestbook, many=True)
         return Response(
             {
@@ -467,7 +469,13 @@ class SearchUserView(ListAPIView):
 
     serializer_class = SearchUserSerializer
     filter_backends = [filters.SearchFilter]
-    search_fields = ["name", "profile__nickname", "email"]
+    search_fields = [
+        "name",
+        "profile__nickname",
+        "profile__introduction",
+        "profile__region",
+        "email",
+    ]
     pagination_class = None
 
     def get_queryset(self):
