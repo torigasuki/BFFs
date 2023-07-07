@@ -22,6 +22,9 @@ eventlet = "^0.33.3"
 django-resized = "^1.0.2"
 openai = "^0.27.8"
 psycopg2 = "^2.9.6"
+daphne = "^4.0.0"
+channels = "^4.0.0"
+channels-redis = "^4.1.0"
 
 
 [build-system]

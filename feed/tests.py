@@ -109,7 +109,7 @@ class FeedDetailViewTest(APITestCase):
             user=cls.user, category=cls.category, title="title1", content="content1"
         )
         cls.feed_data = {
-            "category": 1,
+            "category_id": 1,
             "title": "title1",
             "content": "content1",
         }
@@ -117,11 +117,9 @@ class FeedDetailViewTest(APITestCase):
             "feed_detail_view", kwargs={"community_url": "title1", "feed_id": 1}
         )
         cls.path2 = reverse("feed_detail_view", kwargs={"feed_id": 1})
-        cls.path3 = reverse("feed_create_view", kwargs={"category_id": 1})
+        cls.path3 = reverse("feed_create_view", kwargs={"community_url": "title1"})
         cls.path4 = reverse("like_view", kwargs={"feed_id": 1})
-        cls.path5 = reverse(
-            "feed_notification_view", kwargs={"community_url": "title1", "feed_id": 1}
-        )
+        cls.path5 = reverse("feed_notification_view", kwargs={"feed_id": 1})
 
     def setUp(self):
         self.access_token = self.client.post(reverse("login"), self.user_data).data.get(
@@ -186,7 +184,7 @@ class FeedDetailViewTest(APITestCase):
     def test_put_feed_detail_not_user(self):
         """피드 수정 작성자 아닐때"""
         response = self.client.put(
-            path=self.path2,
+            path=self.path,
             data=self.feed_data,
             HTTP_AUTHORIZATION=f"Bearer {self.access_token2}",
         )
@@ -195,7 +193,7 @@ class FeedDetailViewTest(APITestCase):
     def test_put_feed_detail_success(self):
         """피드 수정 성공"""
         response = self.client.put(
-            path=self.path2,
+            path=self.path,
             data=self.feed_data,
             HTTP_AUTHORIZATION=f"Bearer {self.access_token}",
         )
@@ -204,7 +202,7 @@ class FeedDetailViewTest(APITestCase):
     def test_put_feed_detail_no_data(self):
         """data 없을 때 피드 수정 실패"""
         response = self.client.put(
-            path=self.path2,
+            path=self.path,
             HTTP_AUTHORIZATION=f"Bearer {self.access_token}",
         )
         self.assertEqual(response.status_code, 400)
@@ -244,6 +242,7 @@ class FeedDetailViewTest(APITestCase):
         """data 없을 때 피드 생성 실패"""
         response = self.client.post(
             path=self.path3,
+            data={"category_id": 1},
             HTTP_AUTHORIZATION=f"Bearer {self.access_token}",
         )
         self.assertEqual(response.status_code, 400)
@@ -251,8 +250,12 @@ class FeedDetailViewTest(APITestCase):
     def test_post_feed_detail_no_category(self):
         """category 없을 때 피드 생성 실패"""
         response = self.client.post(
-            path=reverse("feed_create_view", kwargs={"category_id": 2}),
-            data=self.feed_data,
+            path=self.path3,
+            data={
+                "category_id": 2,
+                "title": "title1",
+                "content": "content1",
+            },
             HTTP_AUTHORIZATION=f"Bearer {self.access_token}",
         )
         self.assertEqual(response.status_code, 404)
@@ -311,7 +314,7 @@ class FeedDetailViewTest(APITestCase):
         response = self.client.post(
             path=reverse(
                 "feed_notification_view",
-                kwargs={"community_url": "title1", "feed_id": 10},
+                kwargs={"feed_id": 10},
             ),
             HTTP_AUTHORIZATION=f"Bearer {self.access_token}",
         )
@@ -803,35 +806,42 @@ class GroupPurchaseViewTest(APITestCase):
             "grouppurchase_create_view", args=[cls.community.communityurl]
         )
         cls.path2 = reverse(
-            "grouppurchase_put_delete_view",
+            "grouppurchase_detail_view",
             args=[cls.community.communityurl, cls.grouppurchase.id],
         )
         cls.path3 = reverse(
-            "grouppurchase_put_delete_view",
+            "grouppurchase_detail_view",
             args=[cls.community.communityurl, cls.grouppurchase_is_ended.id],
         )
         cls.path4 = reverse(
             "grouppurchase_list_view", args=[cls.community.communityurl]
         )
         cls.path5 = reverse(
-            "grouppurchase_put_delete_view",
+            "grouppurchase_detail_view",
             args=[cls.community.communityurl, cls.grouppurchase.id],
         )
-        cls.path6 = reverse("grouppurchase_join_view", args=[cls.grouppurchase.id])
+        cls.path6 = reverse(
+            "grouppurchase_join_view",
+            args=[cls.community.communityurl, cls.grouppurchase.id],
+        )
         cls.path7 = reverse(
-            "grouppurchase_join_view", args=[cls.grouppurchase_limit_1.id]
+            "grouppurchase_join_view",
+            args=[cls.community.communityurl, cls.grouppurchase_limit_1.id],
         )
         cls.path8 = reverse(
-            "grouppurchase_join_view", args=[cls.grouppurchase_is_ended.id]
+            "grouppurchase_join_view",
+            args=[cls.community.communityurl, cls.grouppurchase_is_ended.id],
         )
         cls.path9 = reverse(
-            "grouppurchase_join_view", args=[cls.grouppurchase_limit_10.id]
+            "grouppurchase_join_view",
+            args=[cls.community.communityurl, cls.grouppurchase_limit_10.id],
         )
         cls.path10 = reverse(
-            "purchase_comment_create_view", args=[cls.grouppurchase.id]
+            "purchase_comment_create_view",
+            args=[cls.community.communityurl, cls.grouppurchase.id],
         )
         cls.path11 = reverse(
-            "purchase_comment_put_delete_view", args=[cls.purchase_comment.id]
+            "purchase_comment_detail_view", args=[cls.purchase_comment.id]
         )
 
     def setUp(self):
@@ -1226,7 +1236,7 @@ class GroupPurchaseViewTest(APITestCase):
         """공구 게시글 상세 조회 실패"""
         response = self.client.get(
             path=reverse(
-                "grouppurchase_put_delete_view",
+                "grouppurchase_detail_view",
                 kwargs={
                     "community_url": self.community.communityurl,
                     "grouppurchase_id": 100,

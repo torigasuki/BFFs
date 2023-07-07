@@ -16,7 +16,7 @@ def send_text(request, user_input, ai_chat):
         {
             # 시스템 역할(기본설정) 주기
             "role": "system",
-            "content": "Response Korean!!!, Shortly. Chat naturally, friendly like talking to Bestie. Use half words. Do not context repetition.",
+            "content": "Response Shortly, Korean. Chat naturally, friendly like talking to Bestie. Use half words.",
         }
     )
 
@@ -35,18 +35,15 @@ def send_text(request, user_input, ai_chat):
         }
     )
 
-    # with st.spinner("잠깐만! 생각 중이야!"):
     prompt = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         max_tokens=300,
         messages=gpt_prompt,
-        temperature=0.8,
-        top_p=1,
-        presence_penalty=1.8,
-        frequency_penalty=0.2,
+        temperature=0.6,
+        top_p=0.7,
+        presence_penalty=1.5,
     )
     # json response에서 필요한 부분만 불러옴
-
     return prompt["choices"][0]["message"]["content"]
 
 
