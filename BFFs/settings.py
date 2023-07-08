@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "channels",
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
@@ -236,6 +237,6 @@ CORS_ALLOWED_ORIGINS = [
     "https://api.makebestie.com",
 ]
 
-CORS_ORIGIN_WHITELIST = ["http://13.125.60.48"]
+CORS_ORIGIN_WHITELIST = ["http://3.34.98.102"]
 
 CSRF_TRUSTED_ORIGINS = CORS_ORIGIN_WHITELIST
