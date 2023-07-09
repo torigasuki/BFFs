@@ -235,6 +235,7 @@ CELERY_TIMEZONE = "Asia/Seoul"
 CORS_ALLOWED_ORIGINS = [
     "https://makebestie.com",
     "https://api.makebestie.com",
+    # "http://localhost:8080",
 ]
 
 CORS_ORIGIN_WHITELIST = ["http://3.34.98.102"]
