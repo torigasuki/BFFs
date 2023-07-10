@@ -1,6 +1,7 @@
 from datetime import datetime
 from pytz import timezone
 from rest_framework import serializers
+from decouple import config
 
 from community.models import Community
 from feed.models import (
@@ -123,6 +124,8 @@ class FeedListSerializer(serializers.ModelSerializer):
     """feed 리스트 serializer"""
 
     nickname = serializers.SerializerMethodField()
+    profileimage = serializers.SerializerMethodField()
+    profileimageurl = serializers.SerializerMethodField()
     category = serializers.SerializerMethodField()
     comments_count = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
@@ -134,6 +137,8 @@ class FeedListSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "nickname",
+            "profileimage",
+            "profileimageurl",
             "title",
             "content",
             "view_count",
@@ -147,6 +152,16 @@ class FeedListSerializer(serializers.ModelSerializer):
 
     def get_nickname(self, obj):
         return Profile.objects.get(user=obj.user).nickname
+
+    def get_profileimage(self, obj):
+        return str(Profile.objects.get(user=obj.user).profileimage)
+
+    def get_profileimageurl(self, obj):
+        return (
+            config("BACKEND_URL")
+            + "/media/"
+            + str(Profile.objects.get(user=obj.user).profileimage)
+        )
 
     def get_category(self, obj):
         return Category.objects.get(id=obj.category_id).category_name

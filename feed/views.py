@@ -43,6 +43,7 @@ from feed.serializers import (
     GroupPurchaseSelfEndSerializer,
 )
 import math
+from alarm.models import Alarm
 
 
 class CustomPagination(PageNumberPagination):
@@ -100,6 +101,11 @@ class CommentView(APIView):
         if serializer.is_valid():
             serializer.save(user=request.user, feed_id=feed_id)
             feed = get_object_or_404(Feed, id=feed_id)
+            Alarm.objects.create(
+                user=feed.user,
+                feed=feed,
+                message="피드에 새로운 댓글이 달렸습니다!",
+            )
             comment = feed.comment.all().order_by("-created_at")
             comment_serializer = CommentSerializer(comment, many=True)
             return Response(
@@ -176,6 +182,12 @@ class CocommentView(APIView):
                     )
         if serializer.is_valid():
             serializer.save(user=request.user, comment_id=comment_id)
+            comment = get_object_or_404(Comment, id=comment_id)
+            Alarm.objects.create(
+                user=request.user,
+                feed=comment.feed,
+                message="댓글에 새로운 댓글이 달렸습니다!",
+            )
             return Response({"message": "대댓글을 작성했습니다."}, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

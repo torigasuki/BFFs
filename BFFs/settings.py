@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "channels",
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
@@ -58,7 +59,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
+            "hosts": [("redis", 6379)],
         },
     },
 }
@@ -234,8 +235,9 @@ CELERY_TIMEZONE = "Asia/Seoul"
 CORS_ALLOWED_ORIGINS = [
     "https://makebestie.com",
     "https://api.makebestie.com",
+    # "http://localhost:8080",
 ]
 
-CORS_ORIGIN_WHITELIST = ["http://13.125.60.48"]
+CORS_ORIGIN_WHITELIST = ["http://3.34.98.102"]
 
 CSRF_TRUSTED_ORIGINS = CORS_ORIGIN_WHITELIST
