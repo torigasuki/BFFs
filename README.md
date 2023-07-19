@@ -36,6 +36,7 @@
       user Admin, 금지어<br/>
       검색 기능<br/>
       네이버 소셜로그인<br/>
+      알림 기능<br/>
     </dd>
     <dt>정승호(승파이더맨) - 부리더</dt>
     <dd>
@@ -46,6 +47,7 @@
       페이지네이션<br/>
       비밀번호 변경<br/>
       휴면<br/>
+      배포 및 웹소켓<br/>
     </dd>
     <dt>황단아(딴딴) - 팀원</dt>
     <dd>
@@ -73,17 +75,18 @@
     <li>유저가 생성하는 커뮤니티, 매니저 권한과 부매니저 위임 권한 주기</li>
     <li>공동구매 모집 및 인원 제한 기능</li>
     <li>AI가 해주는 고민 상담</li>
+    <li>실시간 댓글, 대댓글 알림 기능</li>
   </ul>
 </div>
 
 <div align="center">
   <h2>🌳 BFF ERD</h2>
-        <img src="https://ifh.cc/g/YSWPh2.jpg" alt="bff_CI/CD">
+        <img src="https://ifh.cc/g/qmNnaA.jpg" alt="bff_CI/CD">
 </div>
 
 <div align="center">
   <h2>🌳 BFF CI/CD</h2>
-        <img src="https://ifh.cc/g/hno3NY.png" alt="bff_CI/CD">
+        <img src="https://ifh.cc/g/x5LO1X.png" alt="bff_CI/CD">
 </div>
 
 <div align="center">
@@ -114,13 +117,16 @@
 <div align="center">
   <img src="https://img.shields.io/badge/python-1E3D2F?style=for-the-badge&logo=python&logoColor=white" alt="python logo img"/>
   <img src="https://img.shields.io/badge/django-4579DD?style=for-the-badge&logo=django&logoColor=white" alt="django logo img"/>
-  <br/>
   <img src="https://img.shields.io/badge/poetry-4FAFDF?style=for-the-badge&logo=poetry&logoColor=white" alt="poetry logo img"/>
-  <img src="https://img.shields.io/badge/celery-BEDC75?style=for-the-badge&logo=celery&logoColor=white" alt="celery logo img"/>
-  <img src="https://img.shields.io/badge/gunicorn-5D9551?style=for-the-badge&logo=gunicorn&logoColor=white" alt="gunicorn logo img"/>
-  <img src="https://img.shields.io/badge/rabbitmq-E2853D?style=for-the-badge&logo=rabbitmq&logoColor=white" "rabbitmq logo img"/>
-  <img src="https://img.shields.io/badge/nginx-419144?style=for-the-badge&logo=nginx&logoColor=#ffffff" "nginx logo img"/>
   <br/>
+  <img src="https://img.shields.io/badge/REDIS-D15C4A?style=for-the-badge&logo=REDIS&logoColor=white" alt="REDIS logo img"/>
+  <img src="https://img.shields.io/badge/DAPHNE-1E3D2F?style=for-the-badge&logo=DAPHNE&logoColor=white" alt="DAPHNE logo img"/>
+  <img src="https://img.shields.io/badge/gunicorn-5D9551?style=for-the-badge&logo=gunicorn&logoColor=white" alt="gunicorn logo img"/>
+  <img src="https://img.shields.io/badge/nginx-419144?style=for-the-badge&logo=nginx&logoColor=#ffffff" "nginx logo img"/>
+  <img src="https://img.shields.io/badge/celery-BEDC75?style=for-the-badge&logo=celery&logoColor=white" alt="celery logo img"/>
+  <img src="https://img.shields.io/badge/rabbitmq-E2853D?style=for-the-badge&logo=rabbitmq&logoColor=white" "rabbitmq logo img"/>
+  <br/>
+  <img src="https://img.shields.io/badge/amazonaws-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white">
   <img src="https://img.shields.io/badge/amazonec2-8E492A?style=for-the-badge&logo=amazonec2&logoColor=white" alt="amazonec2 logo img"/>
   <img src="https://img.shields.io/badge/amazons3-D15C4A?style=for-the-badge&logo=amazons3&logoColor=white" alt="amazones3 logo img"/>
   <img src="https://img.shields.io/badge/docker-4590B0?style=for-the-badge&logo=docker&logoColor=white" alt="docker logo img"/>
