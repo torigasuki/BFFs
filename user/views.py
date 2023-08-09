@@ -20,6 +20,7 @@ from rest_framework_simplejwt.views import TokenViewBase
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from .models import User, Profile, GuestBook, Verify
+from community.models import Community
 from .serializers import (
     UserCreateSerializer,
     UserDelSerializer,
@@ -298,16 +299,24 @@ class ProfileDetailView(APIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get(self, request, user_id):
-        profile = Profile.objects.get(user_id=user_id)
+        profile = get_object_or_404(
+            Profile.objects.select_related('user'),
+            user_id = user_id
+        )
+        
         profile_serializer = UserProfileSerializer(profile)
-        user = User.objects.get(id=user_id)
+
+        user = profile.user
+
         bookmark = user.bookmark.all()
         bookmark_serializer = CommunityCreateSerializer(
-            bookmark, context={"request": request}, many=True
+            bookmark,context={"request": request} ,many=True
         )
+        
         community = CommunityAdmin.objects.filter(user_id=user_id)
         community_serializer = MyCommunitySerializer(community, many=True)
-        feed = user.author.all()
+
+        feed = user.author.all().select_related('user')
         feed_serializer = ProfileFeedSerializer(feed, many=True)
         joined = (
             user.joined_user.filter(user_id=user_id)
@@ -352,7 +361,7 @@ class ProfileDetailView(APIView):
                     {"message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST
                 )
         else:
-            return Response({"message": "권한이 없습니다!"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"message": "권한이 없습니다!"}, status=status.HTTP_401_UNAUTHORIZED)
 
     def delete(self, request, user_id):
         profile = User.objects.get(id=user_id)
@@ -435,7 +444,7 @@ class GuestBookDetailView(APIView):
             comment.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
-            return Response("권한이 없습니다.", status=status.HTTP_403_FORBIDDEN)
+            return Response("권한이 없습니다.", status=status.HTTP_401_UNAUTHORIZED)
 
 
 class MyPasswordResetView(APIView):
@@ -486,3 +495,4 @@ class SearchUserView(ListAPIView):
             mycomu__is_subadmin=True, mycomu__community__communityurl=communityurl
         )
         return queryset
+
