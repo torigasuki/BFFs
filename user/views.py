@@ -310,7 +310,7 @@ class ProfileDetailView(APIView):
 
         bookmark = user.bookmark.all()
         bookmark_serializer = CommunityCreateSerializer(
-            bookmark, many=True
+            bookmark,context={"request": request} ,many=True
         )
         
         community = CommunityAdmin.objects.filter(user_id=user_id)
