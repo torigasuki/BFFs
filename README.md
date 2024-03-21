@@ -136,31 +136,6 @@
 
 
 <div align="center">
-  <h2>🏡 배포 주소</h2>
-</div>
-  
-<div align="center">
-  <div>
-      <dl>
-        <a href="https://makebestie.com/" style="text-decoration-line: none";>
-          <img src="https://ifh.cc/g/gw8rYq.png" alt="bff_fe logo">
-          <dt>bffs frontend</dt>
-        </a>
-      </dl>
-  </div>
-  <div>
-    <dl display="flex">
-      <a href="https://api.makebestie.com/" text-decoration-line: none;>
-        <img src="https://ifh.cc/g/vato5z.png" alt="bff_be logo">
-        <dt>bffs backend</dt>
-      </a>
-    </dl>
-
-  </div>
-</div>
-
-
-<div align="center">
   <h2>시작 가이드</h2>
 
   ### Installation
