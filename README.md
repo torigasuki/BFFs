@@ -1,6 +1,6 @@
 
 <div align="center">
-  <img src="https://imgur.com/undefined" alt="bff thumbnail img"/>
+  <img src="https://imgur.com/6LEZdjg.png" alt="bff thumbnail img"/>
 </div>
 
 <div align="center">
@@ -80,12 +80,12 @@
 
 <div align="center">
   <h2>🌳 BFF ERD</h2>
-        <img src="https://imgur.com/xe1uf0I" alt="bff_CI/CD">
+        <img src="https://imgur.com/xe1uf0I.png" alt="bff_CI/CD">
 </div>
 
 <div align="center">
   <h2>🌳 BFF CI/CD</h2>
-        <img src="https://imgur.com/RzJN9ZM" alt="bff_CI/CD">
+        <img src="https://imgur.com/RzJN9ZM.png" alt="bff_CI/CD">
 </div>
 
 <div align="center">
