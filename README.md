@@ -1,7 +1,6 @@
 
 <div align="center">
-  <img src="https://ifh.cc/g/Zk8KWM.png" alt="bff thumbnail img"/>
-  <img src="https://ifh.cc/g/Q2sOPw.png" alt="bff logo"/>
+  <img src="https://imgur.com/undefined" alt="bff thumbnail img"/>
 </div>
 
 <div align="center">
@@ -81,12 +80,12 @@
 
 <div align="center">
   <h2>🌳 BFF ERD</h2>
-        <img src="https://ifh.cc/g/qmNnaA.jpg" alt="bff_CI/CD">
+        <img src="https://imgur.com/xe1uf0I" alt="bff_CI/CD">
 </div>
 
 <div align="center">
   <h2>🌳 BFF CI/CD</h2>
-        <img src="https://ifh.cc/g/x5LO1X.png" alt="bff_CI/CD">
+        <img src="https://imgur.com/RzJN9ZM" alt="bff_CI/CD">
 </div>
 
 <div align="center">
@@ -197,14 +196,3 @@ $ npm install
 
 
 
-<div align="center">
-  <img src="https://ifh.cc/g/frOlgb.png" alt=""/>
-</div>
-
-<div align="center">
-  <img src="https://ifh.cc/g/nVrVPh.png" alt="BestFriendForever logo"/>
-</div>
-
-<div align="center">
-  <img src="https://ifh.cc/g/L04w0w.png" alt="bff thumbnail img"/>
-</div>
