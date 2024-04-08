@@ -9,6 +9,8 @@
     <dl>
       <dd>개발기간 :</dd>
       <dt font-style="normal">23.06.05 ~ 23.07.10</dt>
+      <dd>브로셔 :</dd>
+      <dt font-style="normal">https://lofty-foam-e87.notion.site/BFF-f4ad0c52ab5442c7b96ba1ae7a7f17f8?pvs=4</dt>
     </dl>
   </p>
 </div>
